@@ -1,7 +1,336 @@
- <div class="container">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #36393f;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: #2f3136;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .server-header {
+            height: 48px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #202225;
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .channels {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .channel {
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 4px;
+            color: #96989d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+
+        .channel:hover {
+            background: #3a3c42;
+            color: #dcddde;
+        }
+
+        .channel.active {
+            background: #404249;
+            color: #fff;
+        }
+
+        .channel::before {
+            content: '#';
+            margin-right: 6px;
+            font-weight: 600;
+            color: #72767d;
+        }
+
+        .online-users {
+            padding: 8px;
+            border-top: 1px solid #202225;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .online-header {
+            color: #96989d;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .user-list-item {
+            padding: 4px 8px;
+            color: #96989d;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-list-item::before {
+            content: '●';
+            color: #3ba55d;
+            margin-right: 6px;
+        }
+
+        .user-area {
+            height: 52px;
+            background: #292b2f;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #202225;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .username {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .connection-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ed4245;
+            margin-left: 8px;
+        }
+
+        .connection-status.connected {
+            background: #3ba55d;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #36393f;
+        }
+
+        .chat-header {
+            height: 48px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #202225;
+            color: #fff;
+        }
+
+        .channel-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .channel-name::before {
+            content: '#';
+            margin-right: 4px;
+            color: #72767d;
+        }
+
+        .typing-indicator {
+            font-size: 12px;
+            color: #72767d;
+            font-style: italic;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message {
+            display: flex;
+            padding: 4px 0;
+            margin-bottom: 12px;
+        }
+
+        .message:hover {
+            background: #32353b;
+            margin: 0 -16px 12px;
+            padding: 4px 16px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            color: #fff;
+            font-weight: 500;
+            font-size: 15px;
+            margin-right: 8px;
+        }
+
+        .message-timestamp {
+            color: #72767d;
+            font-size: 12px;
+        }
+
+        .message-text {
+            color: #dcddde;
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .input-area {
+            padding: 16px;
+        }
+
+        .input-wrapper {
+            background: #40444b;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #dcddde;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .message-input::placeholder {
+            color: #72767d;
+        }
+
+        .send-btn {
+            background: #5865f2;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-left: 8px;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #4752c4;
+        }
+
+        .send-btn:active {
+            background: #3c45a5;
+        }
+
+        .send-btn:disabled {
+            background: #4e5058;
+            cursor: not-allowed;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2f3136;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #202225;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1a1c1f;
+        }
+
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: monospace;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
         <div class="sidebar">
             <div class="server-header">
-                My Server
                 The Chet
             </div>
             <div class="channels" id="channelList">
@@ -42,10 +371,16 @@
         </div>
     </div>
 
-    <script>
-        // Configuration
-        const WS_URL = `ws://${window.location.hostname}:3000`;
+    <div class="debug-info" id="debugInfo"></div>
 
+    <script>
+        // Configuration - FIXED: Use correct WebSocket protocol
+        const WS_URL = window.location.protocol === 'https:' 
+            ? `wss://${window.location.host}` 
+            : `ws://${window.location.hostname}:${window.location.port || 3000}`;
+        
+        console.log('WebSocket URL:', WS_URL);
+        
         // State
         const state = {
             currentChannel: 'general',
@@ -83,18 +418,29 @@
 
         // WebSocket connection
         function connectWebSocket() {
-            state.ws = new WebSocket(WS_URL);
+            console.log('Attempting to connect to:', WS_URL);
+            
+            try {
+                state.ws = new WebSocket(WS_URL);
+            } catch (error) {
+                console.error('Failed to create WebSocket:', error);
+                setTimeout(connectWebSocket, 3000);
+                return;
+            }
 
             state.ws.onopen = () => {
-                console.log('Connected to server');
+                console.log('✓ Connected to server');
                 state.connected = true;
-                connectionStatus.classList.remove('disconnected');
-
+                connectionStatus.classList.add('connected');
+                sendBtn.disabled = false;
+                
                 // Join server
-                send({
+                const joinMsg = {
                     type: 'join',
                     username: state.username
-                });
+                };
+                console.log('Sending join message:', joinMsg);
+                send(joinMsg);
 
                 // Get history for current channel
                 send({
@@ -104,15 +450,21 @@
             };
 
             state.ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                handleServerMessage(data);
+                console.log('Received from server:', event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    handleServerMessage(data);
+                } catch (error) {
+                    console.error('Error parsing server message:', error);
+                }
             };
 
             state.ws.onclose = () => {
-                console.log('Disconnected from server');
+                console.log('✗ Disconnected from server');
                 state.connected = false;
-                connectionStatus.classList.add('disconnected');
-
+                connectionStatus.classList.remove('connected');
+                sendBtn.disabled = true;
+                
                 // Reconnect after 3 seconds
                 setTimeout(connectWebSocket, 3000);
             };
@@ -124,21 +476,32 @@
 
         // Handle server messages
         function handleServerMessage(data) {
+            console.log('Handling message type:', data.type);
+            
             switch (data.type) {
+                case 'connected':
+                    console.log('Server confirmed connection');
+                    break;
                 case 'joined':
                     console.log('Successfully joined server');
                     break;
                 case 'message':
+                    console.log('Received chat message:', data.message);
                     addMessageToChannel(data.message);
                     break;
                 case 'history':
+                    console.log(`Loaded ${data.messages.length} messages for #${data.channel}`);
                     loadHistory(data.channel, data.messages);
                     break;
                 case 'userList':
+                    console.log('Updated user list:', data.users);
                     updateUserList(data.users);
                     break;
                 case 'typing':
                     handleTypingIndicator(data);
+                    break;
+                case 'error':
+                    console.error('Server error:', data.message);
                     break;
                 default:
                     console.log('Unknown message type:', data.type);
@@ -148,20 +511,38 @@
         // Send message to server
         function send(data) {
             if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-                state.ws.send(JSON.stringify(data));
+                const jsonData = JSON.stringify(data);
+                console.log('Sending to server:', jsonData);
+                state.ws.send(jsonData);
+            } else {
+                console.error('Cannot send - WebSocket not open. State:', state.ws?.readyState);
             }
         }
 
         // Add message
         function addMessage() {
             const text = messageInput.value.trim();
-            if (!text || !state.connected) return;
+            console.log('addMessage called, text:', text, 'connected:', state.connected);
+            
+            if (!text) {
+                console.log('Empty message, ignoring');
+                return;
+            }
+            
+            if (!state.connected) {
+                console.log('Not connected to server');
+                alert('Not connected to server. Please wait...');
+                return;
+            }
 
-            send({
+            const messageData = {
                 type: 'message',
                 channel: state.currentChannel,
                 text: text
-            });
+            };
+            
+            console.log('Sending message:', messageData);
+            send(messageData);
 
             messageInput.value = '';
             stopTyping();
@@ -190,6 +571,7 @@
         // Render messages
         function renderMessages() {
             const messages = state.messages[state.currentChannel] || [];
+            console.log(`Rendering ${messages.length} messages for #${state.currentChannel}`);
             messageArea.innerHTML = '';
 
             messages.forEach(msg => {
@@ -234,7 +616,7 @@
         function updateUserList(users) {
             state.users = users;
             userList.innerHTML = '';
-
+            
             users.forEach(username => {
                 const userEl = document.createElement('div');
                 userEl.className = 'user-list-item';
@@ -268,6 +650,8 @@
         }
 
         function startTyping() {
+            if (!state.connected) return;
+            
             send({
                 type: 'typing',
                 channel: state.currentChannel,
@@ -279,6 +663,8 @@
         }
 
         function stopTyping() {
+            if (!state.connected) return;
+            
             send({
                 type: 'typing',
                 channel: state.currentChannel,
@@ -295,6 +681,7 @@
 
         // Switch channel
         function switchChannel(channel) {
+            console.log('Switching to channel:', channel);
             state.currentChannel = channel;
             currentChannelEl.textContent = channel;
             messageInput.placeholder = `Message #${channel}`;
@@ -321,10 +708,16 @@
         }
 
         // Event listeners
-        sendBtn.addEventListener('click', addMessage);
-
+        sendBtn.addEventListener('click', (e) => {
+            console.log('Send button clicked');
+            e.preventDefault();
+            addMessage();
+        });
+        
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                console.log('Enter key pressed');
+                e.preventDefault();
                 addMessage();
             }
         });
@@ -345,6 +738,7 @@
         });
 
         // Initialize app
+        console.log('Initializing chat application...');
         init();
     </script>
 </body>
