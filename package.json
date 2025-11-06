@@ -1,7 +1,7 @@
 {
-  "name": "simple-chat-app",
+  "name": "chet",
   "version": "1.0.0",
-  "description": "A simple Discord-like chat application with WebSocket support",
+  "description": "the awesomest website for chetting",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
