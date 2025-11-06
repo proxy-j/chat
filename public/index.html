@@ -99,6 +99,19 @@
             align-items: center;
         }
 
+        /* */
+        .user-list-item.admin {
+            color: #5865f2;
+            font-weight: 600;
+        }
+        .user-list-item.muted::after {
+            content: '[Muted]';
+            font-size: 10px;
+            color: #ed4245;
+            margin-left: 4px;
+        }
+        /* */
+
         .user-list-item::before {
             content: '●';
             color: #3ba55d;
@@ -233,6 +246,12 @@
             font-size: 15px;
             margin-right: 8px;
         }
+        
+        /* */
+        .message-author.admin {
+            color: #5865f2;
+        }
+        /* */
 
         .message-timestamp {
             color: #72767d;
@@ -266,6 +285,15 @@
             font-size: 15px;
             outline: none;
         }
+        
+        /* */
+        .message-input:disabled {
+            background: #3a3c42;
+            cursor: not-allowed;
+            color: #72767d;
+        }
+        /* */
+
 
         .message-input::placeholder {
             color: #72767d;
@@ -325,6 +353,95 @@
             font-family: monospace;
             display: none;
         }
+
+        /* */
+        .admin-panel {
+            width: 240px;
+            background: #2f3136;
+            border-left: 1px solid #202225;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            overflow-y: auto;
+        }
+
+        .admin-panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            color: #96989d;
+            border-bottom: 1px solid #202225;
+            padding-bottom: 8px;
+        }
+        
+        .admin-section {
+            margin-bottom: 16px;
+        }
+
+        .admin-panel .admin-action {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+        }
+
+        .admin-panel label {
+            font-size: 12px;
+            color: #96989d;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .admin-panel input[type="text"],
+        .admin-panel input[type="number"] {
+            background: #202225;
+            border: 1px solid #202225;
+            border-radius: 4px;
+            padding: 8px;
+            color: #dcddde;
+            outline: none;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .admin-panel input::placeholder {
+            color: #72767d;
+        }
+
+        .admin-panel button {
+            background: #5865f2;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            font-size: 13px;
+        }
+
+        .admin-panel button:hover {
+            background: #4752c4;
+        }
+        
+        .admin-panel button.danger-btn {
+             background: #ed4245;
+        }
+        .admin-panel button.danger-btn:hover {
+            background: #c23639;
+        }
+        
+        .admin-action-row {
+            display: flex;
+            gap: 8px;
+        }
+        .admin-action-row button {
+            flex: 1;
+        }
+        
+        /* */
+
     </style>
 </head>
 <body>
@@ -369,7 +486,37 @@
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="admin-panel" id="adminPanel" style="display: none;">
+            <h3>Admin Panel</h3>
+            
+            <div class="admin-section">
+                <div class="admin-action">
+                    <label for="adminUser">Target User:</label>
+                    <input type="text" id="adminUserInput" placeholder="Username">
+                </div>
+                 <div class="admin-action">
+                    <label for="adminDuration">Duration (minutes):</label>
+                    <input type="number" id="adminDurationInput" placeholder="0 for permanent">
+                </div>
+                <div class="admin-action-row">
+                    <button id="adminMuteBtn" class="danger-btn">Mute</button>
+                    <button id="adminKickBtn">Kick</button>
+                </div>
+                 <div class="admin-action-row" style="margin-top: 8px;">
+                    <button id="adminBanUserBtn" class="danger-btn">Ban User</button>
+                    <button id="adminBanIPBtn" class="danger-btn">Ban IP</button>
+                </div>
+            </div>
+            
+             <div class="admin-section">
+                <div class="admin-action">
+                    <label>Clear Channel:</label>
+                    <button id="clearChannelBtn" class="danger-btn">Clear #general</button>
+                </div>
+            </div>
+        </div>
+        </div>
 
     <div class="debug-info" id="debugInfo"></div>
 
@@ -389,7 +536,8 @@
             connected: false,
             messages: {},
             users: [],
-            typingUsers: {}
+            typingUsers: {},
+            isAdmin: false // NEW: Admin status flag
         };
 
         // DOM Elements
@@ -404,10 +552,32 @@
         const userList = document.getElementById('userList');
         const typingIndicator = document.getElementById('typingIndicator');
 
+        // NEW: Admin Panel DOM Elements
+        const adminPanel = document.getElementById('adminPanel');
+        const adminUserInput = document.getElementById('adminUserInput');
+        const adminDurationInput = document.getElementById('adminDurationInput');
+        const adminMuteBtn = document.getElementById('adminMuteBtn');
+        const adminKickBtn = document.getElementById('adminKickBtn');
+        const adminBanUserBtn = document.getElementById('adminBanUserBtn');
+        const adminBanIPBtn = document.getElementById('adminBanIPBtn');
+        const clearChannelBtn = document.getElementById('clearChannelBtn');
+
         let typingTimeout;
 
         // Initialize
         function init() {
+            // NEW: Password prompt
+            // THIS IS NOT SECURE, but it's for demonstration.
+            // A real app would have a login page.
+            const password = prompt('Enter admin password (leave blank for user):');
+            if (password === 'admin123') { // !! Demo password !!
+                state.isAdmin = true;
+                adminPanel.style.display = 'flex'; // Show the admin panel
+                console.log('Admin access granted');
+            } else {
+                console.log('User access');
+            }
+
             const savedUsername = prompt('Enter your username:', 'User') || 'User';
             state.username = savedUsername;
             usernameDisplay.textContent = savedUsername;
@@ -437,7 +607,8 @@
                 // Join server
                 const joinMsg = {
                     type: 'join',
-                    username: state.username
+                    username: state.username,
+                    isAdmin: state.isAdmin // NEW: Tell the server we are an admin
                 };
                 console.log('Sending join message:', joinMsg);
                 send(joinMsg);
@@ -500,8 +671,24 @@
                 case 'typing':
                     handleTypingIndicator(data);
                     break;
+                case 'admin_confirm': // NEW
+                    console.log('Admin action confirmed:', data.message);
+                    alert(`Admin: ${data.message}`);
+                    break;
+                case 'muted': // NEW
+                    console.log('You are muted:', data.reason);
+                    alert(`You have been muted. Reason: ${data.reason}`);
+                    messageInput.disabled = true;
+                    messageInput.placeholder = data.reason;
+                    break;
                 case 'error':
                     console.error('Server error:', data.message);
+                    alert(`Error: ${data.message}`);
+                    // NEW: Check for critical errors
+                    if (data.kick) {
+                         alert('You have been disconnected.');
+                         state.ws.close();
+                    }
                     break;
                 default:
                     console.log('Unknown message type:', data.type);
@@ -591,6 +778,12 @@
                 const author = document.createElement('span');
                 author.className = 'message-author';
                 author.textContent = msg.author;
+                
+                // NEW: Highlight admins
+                if (msg.isAdmin) {
+                    author.classList.add('admin');
+                    author.textContent += ' [Admin]';
+                }
 
                 const timestamp = document.createElement('span');
                 timestamp.className = 'message-timestamp';
@@ -617,10 +810,18 @@
             state.users = users;
             userList.innerHTML = '';
             
-            users.forEach(username => {
+            // NEW: 'users' is now an array of objects
+            users.forEach(user => {
                 const userEl = document.createElement('div');
                 userEl.className = 'user-list-item';
-                userEl.textContent = username;
+                userEl.textContent = user.username;
+                
+                if (user.isAdmin) {
+                    userEl.classList.add('admin');
+                }
+                if (user.isMuted) {
+                    userEl.classList.add('muted');
+                }
                 userList.appendChild(userEl);
             });
         }
@@ -686,6 +887,9 @@
             currentChannelEl.textContent = channel;
             messageInput.placeholder = `Message #${channel}`;
 
+            // NEW: Update admin panel button
+            clearChannelBtn.textContent = `Clear #${channel}`;
+
             document.querySelectorAll('.channel').forEach(ch => {
                 ch.classList.remove('active');
                 if (ch.dataset.channel === channel) {
@@ -734,6 +938,68 @@
             const channel = e.target.closest('.channel');
             if (channel) {
                 switchChannel(channel.dataset.channel);
+            }
+        });
+
+        // NEW: Admin Panel Event Listeners
+        function getAdminActionPayload() {
+            const targetUsername = adminUserInput.value.trim();
+            if (!targetUsername) {
+                alert('Target Username is required.');
+                return null;
+            }
+            
+            let duration = parseInt(adminDurationInput.value, 10);
+            if (isNaN(duration) || duration <= 0) {
+                duration = 0; // 0 means permanent
+            }
+            
+            return { targetUsername, duration };
+        }
+        
+        adminMuteBtn.addEventListener('click', () => {
+            const payload = getAdminActionPayload();
+            if (payload) {
+                send({ type: 'admin_mute', ...payload });
+            }
+        });
+
+        adminKickBtn.addEventListener('click', () => {
+            const targetUsername = adminUserInput.value.trim();
+            if (!targetUsername) {
+                alert('Target Username is required.');
+                return;
+            }
+            if (confirm(`Are you sure you want to kick ${targetUsername}?`)) {
+                 send({ type: 'admin_kick', targetUsername });
+            }
+        });
+        
+        adminBanUserBtn.addEventListener('click', () => {
+            const payload = getAdminActionPayload();
+            if (payload) {
+                if (confirm(`Are you sure you want to ban username ${payload.targetUsername}?`)) {
+                    send({ type: 'admin_ban', banType: 'username', ...payload });
+                }
+            }
+        });
+        
+        adminBanIPBtn.addEventListener('click', () => {
+            const payload = getAdminActionPayload();
+            if (payload) {
+                 if (confirm(`Are you sure you want to ban the IP of ${payload.targetUsername}?`)) {
+                    send({ type: 'admin_ban', banType: 'ip', ...payload });
+                }
+            }
+        });
+
+        clearChannelBtn.addEventListener('click', () => {
+            if (confirm(`Are you sure you want to clear all messages in #${state.currentChannel}?`)) {
+                console.log(`Sending admin_clear for: #${state.currentChannel}`);
+                send({
+                    type: 'admin_clear',
+                    channel: state.currentChannel
+                });
             }
         });
 
