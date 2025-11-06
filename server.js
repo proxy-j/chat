@@ -25,12 +25,23 @@ const users = new Map(); // WebSocket -> user info
 wss.on('connection', (ws) => {
     console.log('New client connected');
     
+    // Send immediate confirmation
+    ws.send(JSON.stringify({
+        type: 'connected',
+        message: 'Connected to server'
+    }));
+    
     ws.on('message', (data) => {
         try {
-            const message = JSON.parse(data);
+            console.log('Received message:', data.toString());
+            const message = JSON.parse(data.toString());
             handleMessage(ws, message);
         } catch (error) {
             console.error('Error parsing message:', error);
+            ws.send(JSON.stringify({
+                type: 'error',
+                message: 'Error parsing message'
+            }));
         }
     });
 
@@ -38,8 +49,8 @@ wss.on('connection', (ws) => {
         const user = users.get(ws);
         if (user) {
             console.log(`User ${user.username} disconnected`);
-            broadcastUserList();
             users.delete(ws);
+            broadcastUserList();
         }
     });
 
@@ -50,6 +61,8 @@ wss.on('connection', (ws) => {
 
 // Handle different message types
 function handleMessage(ws, message) {
+    console.log('Handling message type:', message.type);
+    
     switch (message.type) {
         case 'join':
             handleJoin(ws, message);
@@ -71,6 +84,8 @@ function handleMessage(ws, message) {
 // User joins
 function handleJoin(ws, message) {
     const { username } = message;
+    console.log(`User joining: ${username}`);
+    
     users.set(ws, {
         username,
         id: generateId()
@@ -86,15 +101,19 @@ function handleJoin(ws, message) {
     // Broadcast updated user list
     broadcastUserList();
 
-    console.log(`User ${username} joined`);
+    console.log(`User ${username} joined. Total users: ${users.size}`);
 }
 
 // Handle chat messages
 function handleChatMessage(ws, message) {
     const user = users.get(ws);
-    if (!user) return;
+    if (!user) {
+        console.log('Message from unknown user, ignoring');
+        return;
+    }
 
     const { channel, text } = message;
+    console.log(`Message from ${user.username} in #${channel}: ${text}`);
     
     const chatMessage = {
         id: generateId(),
@@ -112,26 +131,39 @@ function handleChatMessage(ws, message) {
         if (channels[channel].length > 100) {
             channels[channel].shift();
         }
+        
+        console.log(`Message stored. Channel ${channel} now has ${channels[channel].length} messages`);
+    } else {
+        console.log(`Channel ${channel} not found`);
     }
 
     // Broadcast to all connected clients
-    broadcast({
+    const broadcastData = {
         type: 'message',
         message: chatMessage
-    });
-
-    console.log(`Message from ${user.username} in #${channel}: ${text}`);
+    };
+    
+    console.log('Broadcasting message to all clients');
+    broadcast(broadcastData);
 }
 
 // Get channel history
 function handleGetHistory(ws, message) {
     const { channel } = message;
+    console.log(`History requested for channel: ${channel}`);
     
     if (channels[channel]) {
         ws.send(JSON.stringify({
             type: 'history',
             channel,
             messages: channels[channel]
+        }));
+        console.log(`Sent ${channels[channel].length} messages for #${channel}`);
+    } else {
+        ws.send(JSON.stringify({
+            type: 'history',
+            channel,
+            messages: []
         }));
     }
 }
@@ -155,6 +187,8 @@ function handleTyping(ws, message) {
 function broadcastUserList() {
     const userList = Array.from(users.values()).map(u => u.username);
     
+    console.log('Broadcasting user list:', userList);
+    
     broadcast({
         type: 'userList',
         users: userList
@@ -164,12 +198,16 @@ function broadcastUserList() {
 // Broadcast to all clients (except sender if specified)
 function broadcast(message, excludeWs = null) {
     const data = JSON.stringify(message);
+    let sentCount = 0;
     
     wss.clients.forEach((client) => {
         if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
             client.send(data);
+            sentCount++;
         }
     });
+    
+    console.log(`Broadcast sent to ${sentCount} clients`);
 }
 
 // Generate unique ID
@@ -225,8 +263,11 @@ app.get('/health', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
+    console.log(`=================================`);
     console.log(`Server running on port ${PORT}`);
     console.log(`WebSocket server is ready`);
+    console.log(`Open http://localhost:${PORT} in your browser`);
+    console.log(`=================================`);
 });
 
 // Graceful shutdown
