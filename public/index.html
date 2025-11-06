@@ -79,6 +79,8 @@
         .online-users {
             padding: 8px;
             border-top: 1px solid #202225;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .online-header {
@@ -141,12 +143,12 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #3ba55d;
+            background: #ed4245;
             margin-left: 8px;
         }
 
-        .connection-status.disconnected {
-            background: #ed4245;
+        .connection-status.connected {
+            background: #3ba55d;
         }
 
         .main-content {
@@ -289,6 +291,11 @@
             background: #3c45a5;
         }
 
+        .send-btn:disabled {
+            background: #4e5058;
+            cursor: not-allowed;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -304,6 +311,19 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: #1a1c1f;
+        }
+
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: monospace;
+            display: none;
         }
     </style>
 </head>
@@ -351,9 +371,15 @@
         </div>
     </div>
 
+    <div class="debug-info" id="debugInfo"></div>
+
     <script>
-        // Configuration
-        const WS_URL = `ws://${window.location.hostname}:3000`;
+        // Configuration - FIXED: Use correct WebSocket protocol
+        const WS_URL = window.location.protocol === 'https:' 
+            ? `wss://${window.location.host}` 
+            : `ws://${window.location.hostname}:${window.location.port || 3000}`;
+        
+        console.log('WebSocket URL:', WS_URL);
         
         // State
         const state = {
@@ -392,18 +418,29 @@
 
         // WebSocket connection
         function connectWebSocket() {
-            state.ws = new WebSocket(WS_URL);
+            console.log('Attempting to connect to:', WS_URL);
+            
+            try {
+                state.ws = new WebSocket(WS_URL);
+            } catch (error) {
+                console.error('Failed to create WebSocket:', error);
+                setTimeout(connectWebSocket, 3000);
+                return;
+            }
 
             state.ws.onopen = () => {
-                console.log('Connected to server');
+                console.log('✓ Connected to server');
                 state.connected = true;
-                connectionStatus.classList.remove('disconnected');
+                connectionStatus.classList.add('connected');
+                sendBtn.disabled = false;
                 
                 // Join server
-                send({
+                const joinMsg = {
                     type: 'join',
                     username: state.username
-                });
+                };
+                console.log('Sending join message:', joinMsg);
+                send(joinMsg);
 
                 // Get history for current channel
                 send({
@@ -413,14 +450,20 @@
             };
 
             state.ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                handleServerMessage(data);
+                console.log('Received from server:', event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    handleServerMessage(data);
+                } catch (error) {
+                    console.error('Error parsing server message:', error);
+                }
             };
 
             state.ws.onclose = () => {
-                console.log('Disconnected from server');
+                console.log('✗ Disconnected from server');
                 state.connected = false;
-                connectionStatus.classList.add('disconnected');
+                connectionStatus.classList.remove('connected');
+                sendBtn.disabled = true;
                 
                 // Reconnect after 3 seconds
                 setTimeout(connectWebSocket, 3000);
@@ -433,21 +476,32 @@
 
         // Handle server messages
         function handleServerMessage(data) {
+            console.log('Handling message type:', data.type);
+            
             switch (data.type) {
+                case 'connected':
+                    console.log('Server confirmed connection');
+                    break;
                 case 'joined':
                     console.log('Successfully joined server');
                     break;
                 case 'message':
+                    console.log('Received chat message:', data.message);
                     addMessageToChannel(data.message);
                     break;
                 case 'history':
+                    console.log(`Loaded ${data.messages.length} messages for #${data.channel}`);
                     loadHistory(data.channel, data.messages);
                     break;
                 case 'userList':
+                    console.log('Updated user list:', data.users);
                     updateUserList(data.users);
                     break;
                 case 'typing':
                     handleTypingIndicator(data);
+                    break;
+                case 'error':
+                    console.error('Server error:', data.message);
                     break;
                 default:
                     console.log('Unknown message type:', data.type);
@@ -457,20 +511,38 @@
         // Send message to server
         function send(data) {
             if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-                state.ws.send(JSON.stringify(data));
+                const jsonData = JSON.stringify(data);
+                console.log('Sending to server:', jsonData);
+                state.ws.send(jsonData);
+            } else {
+                console.error('Cannot send - WebSocket not open. State:', state.ws?.readyState);
             }
         }
 
         // Add message
         function addMessage() {
             const text = messageInput.value.trim();
-            if (!text || !state.connected) return;
+            console.log('addMessage called, text:', text, 'connected:', state.connected);
+            
+            if (!text) {
+                console.log('Empty message, ignoring');
+                return;
+            }
+            
+            if (!state.connected) {
+                console.log('Not connected to server');
+                alert('Not connected to server. Please wait...');
+                return;
+            }
 
-            send({
+            const messageData = {
                 type: 'message',
                 channel: state.currentChannel,
                 text: text
-            });
+            };
+            
+            console.log('Sending message:', messageData);
+            send(messageData);
 
             messageInput.value = '';
             stopTyping();
@@ -499,6 +571,7 @@
         // Render messages
         function renderMessages() {
             const messages = state.messages[state.currentChannel] || [];
+            console.log(`Rendering ${messages.length} messages for #${state.currentChannel}`);
             messageArea.innerHTML = '';
 
             messages.forEach(msg => {
@@ -577,6 +650,8 @@
         }
 
         function startTyping() {
+            if (!state.connected) return;
+            
             send({
                 type: 'typing',
                 channel: state.currentChannel,
@@ -588,6 +663,8 @@
         }
 
         function stopTyping() {
+            if (!state.connected) return;
+            
             send({
                 type: 'typing',
                 channel: state.currentChannel,
@@ -604,6 +681,7 @@
 
         // Switch channel
         function switchChannel(channel) {
+            console.log('Switching to channel:', channel);
             state.currentChannel = channel;
             currentChannelEl.textContent = channel;
             messageInput.placeholder = `Message #${channel}`;
@@ -630,10 +708,16 @@
         }
 
         // Event listeners
-        sendBtn.addEventListener('click', addMessage);
+        sendBtn.addEventListener('click', (e) => {
+            console.log('Send button clicked');
+            e.preventDefault();
+            addMessage();
+        });
         
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                console.log('Enter key pressed');
+                e.preventDefault();
                 addMessage();
             }
         });
@@ -654,6 +738,7 @@
         });
 
         // Initialize app
+        console.log('Initializing chat application...');
         init();
     </script>
 </body>
