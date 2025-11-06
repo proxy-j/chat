@@ -10,12 +10,7 @@ const wss = new WebSocket.Server({ server });
 
 // Middleware
 app.use(express.json());
-// app.use(express.static('public')); // Your original code had this
-// NEW: Serve the HTML file from the root
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
+app.use(express.static('public'));
 
 // In-memory storage
 const channels = {
@@ -24,60 +19,11 @@ const channels = {
     gaming: []
 };
 
-const users = new Map(); // WebSocket -> user info { username, id, ip, isAdmin, muteExpires }
-
-// NEW: Ban management
-const bannedUsernames = new Set();
-const bannedIPs = new Map(); // ip -> { expires: Date }
-
-// NEW: Check for expired bans every minute
-setInterval(() => {
-    const now = new Date();
-    bannedIPs.forEach((banInfo, ip) => {
-        if (banInfo.expires < now) {
-            bannedIPs.delete(ip);
-            console.log(`Ban expired for IP: ${ip}`);
-        }
-    });
-    
-    // Check for expired mutes
-    users.forEach((user) => {
-        if (user.muteExpires && user.muteExpires < now) {
-            user.muteExpires = null;
-            console.log(`Mute expired for user: ${user.username}`);
-            const ws = findSocketByUsername(user.username);
-            if(ws) {
-                ws.send(JSON.stringify({ type: 'info', message: 'Your mute has expired.' }));
-            }
-        }
-    });
-}, 60 * 1000); // Run every 60 seconds
-
+const users = new Map(); // WebSocket -> user info
 
 // WebSocket connection handler
-// NEW: Added 'req' to get the IP address
-wss.on('connection', (ws, req) => {
-    const ip = req.socket.remoteAddress;
-    
-    // NEW: Check for IP ban
-    const banInfo = bannedIPs.get(ip);
-    if (banInfo) {
-        if (banInfo.expires > new Date()) {
-            console.log(`Blocked connection from banned IP: ${ip}`);
-            ws.send(JSON.stringify({ 
-                type: 'error', 
-                message: 'You are banned from this server.',
-                kick: true // NEW: Tell client to disconnect
-            }));
-            ws.terminate();
-            return;
-        } else {
-            // Ban expired, remove it
-            bannedIPs.delete(ip);
-        }
-    }
-    
-    console.log(`New client connected from IP: ${ip}`);
+wss.on('connection', (ws) => {
+    console.log('New client connected');
     
     // Send immediate confirmation
     ws.send(JSON.stringify({
@@ -89,8 +35,7 @@ wss.on('connection', (ws, req) => {
         try {
             console.log('Received message:', data.toString());
             const message = JSON.parse(data.toString());
-            // NEW: Pass IP to message handler
-            handleMessage(ws, message, ip);
+            handleMessage(ws, message);
         } catch (error) {
             console.error('Error parsing message:', error);
             ws.send(JSON.stringify({
@@ -106,8 +51,6 @@ wss.on('connection', (ws, req) => {
             console.log(`User ${user.username} disconnected`);
             users.delete(ws);
             broadcastUserList();
-        } else {
-            console.log('Client disconnected (was not fully joined)');
         }
     });
 
@@ -117,24 +60,12 @@ wss.on('connection', (ws, req) => {
 });
 
 // Handle different message types
-// NEW: Added 'ip'
-function handleMessage(ws, message, ip) {
+function handleMessage(ws, message) {
     console.log('Handling message type:', message.type);
-    
-    // NEW: Check for admin credentials before allowing admin actions
-    if (message.type.startsWith('admin_')) {
-        const user = users.get(ws);
-        if (!user || !user.isAdmin) {
-            console.warn(`Non-admin user ${user?.username} tried to use admin command: ${message.type}`);
-            ws.send(JSON.stringify({ type: 'error', message: 'You are not authorized for this action.' }));
-            return;
-        }
-    }
     
     switch (message.type) {
         case 'join':
-            // NEW: Pass IP to join handler
-            handleJoin(ws, message, ip);
+            handleJoin(ws, message);
             break;
         case 'message':
             handleChatMessage(ws, message);
@@ -145,60 +76,19 @@ function handleMessage(ws, message, ip) {
         case 'typing':
             handleTyping(ws, message);
             break;
-        // --- NEW ADMIN ACTIONS ---
-        case 'admin_kick':
-            handleAdminKick(ws, message);
-            break;
-        case 'admin_mute':
-            handleAdminMute(ws, message);
-            break;
-        case 'admin_ban':
-            handleAdminBan(ws, message);
-            break;
-        case 'admin_clear':
-            handleAdminClear(ws, message);
-            break;
         default:
             console.log('Unknown message type:', message.type);
     }
 }
 
 // User joins
-// NEW: Added 'ip'
-function handleJoin(ws, message, ip) {
-    const { username, isAdmin } = message;
-    console.log(`User joining: ${username} (Admin: ${isAdmin})`);
+function handleJoin(ws, message) {
+    const { username } = message;
+    console.log(`User joining: ${username}`);
     
-    // NEW: Check for username ban
-    if (bannedUsernames.has(username)) {
-        console.log(`Rejected banned username: ${username}`);
-        ws.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'This username is banned.',
-            kick: true 
-        }));
-        ws.terminate();
-        return;
-    }
-    
-    // NEW: Check for duplicate username
-    if (findUserByUsername(username)) {
-         ws.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'This username is already taken.',
-            kick: true 
-        }));
-        ws.terminate();
-        return;
-    }
-
-    // NEW: Store all user info
     users.set(ws, {
         username,
-        id: generateId(),
-        ip,
-        isAdmin: isAdmin || false, // Default to false if not provided
-        muteExpires: null
+        id: generateId()
     });
 
     // Send welcome message
@@ -221,18 +111,6 @@ function handleChatMessage(ws, message) {
         console.log('Message from unknown user, ignoring');
         return;
     }
-    
-    // NEW: Check for mute
-    if (user.muteExpires && user.muteExpires > new Date()) {
-        const remaining = Math.round((user.muteExpires - new Date()) / 60000);
-        const reason = `You are muted. Expires in ${remaining} minutes.`;
-        console.log(`Blocked message from muted user: ${user.username}`);
-        ws.send(JSON.stringify({
-            type: 'error',
-            message: reason
-        }));
-        return;
-    }
 
     const { channel, text } = message;
     console.log(`Message from ${user.username} in #${channel}: ${text}`);
@@ -242,8 +120,7 @@ function handleChatMessage(ws, message) {
         author: user.username,
         text,
         channel,
-        timestamp: new Date().toISOString(),
-        isAdmin: user.isAdmin // NEW: Include admin status in message
+        timestamp: new Date().toISOString()
     };
 
     // Store message
@@ -296,11 +173,6 @@ function handleTyping(ws, message) {
     const user = users.get(ws);
     if (!user) return;
 
-    // NEW: Don't let muted users send typing events
-    if (user.muteExpires && user.muteExpires > new Date()) {
-        return;
-    }
-
     const { channel, isTyping } = message;
     
     broadcast({
@@ -311,149 +183,9 @@ function handleTyping(ws, message) {
     }, ws);
 }
 
-// --- NEW HELPER FUNCTIONS ---
-
-// Find user object by username
-function findUserByUsername(username) {
-    for (const user of users.values()) {
-        if (user.username === username) {
-            return user;
-        }
-    }
-    return null;
-}
-
-// Find WebSocket by username
-function findSocketByUsername(username) {
-     for (const [ws, user] of users.entries()) {
-        if (user.username === username) {
-            return ws;
-        }
-    }
-    return null;
-}
-
-// Calculate expiration date
-function calculateExpiry(durationMinutes) {
-    if (durationMinutes === 0) {
-        // Permanent ban/mute
-        return new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000); // 100 years
-    }
-    return new Date(Date.now() + durationMinutes * 60 * 1000);
-}
-
-
-// --- NEW ADMIN HANDLERS ---
-
-function handleAdminKick(ws, message) {
-    const { targetUsername } = message;
-    const targetSocket = findSocketByUsername(targetUsername);
-    
-    if (targetSocket) {
-        console.log(`Admin ${users.get(ws).username} kicked ${targetUsername}`);
-        targetSocket.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'You have been kicked by an admin.', 
-            kick: true 
-        }));
-        targetSocket.terminate();
-        
-        ws.send(JSON.stringify({ type: 'admin_confirm', message: `User ${targetUsername} has been kicked.` }));
-        broadcastUserList(); // Update list since user is gone
-    } else {
-        ws.send(JSON.stringify({ type: 'error', message: `User ${targetUsername} not found.` }));
-    }
-}
-
-function handleAdminMute(ws, message) {
-    const { targetUsername, duration } = message;
-    const targetUser = findUserByUsername(targetUsername);
-    
-    if (targetUser) {
-        targetUser.muteExpires = calculateExpiry(duration);
-        const reason = `You are muted for ${duration === 0 ? 'permanently' : `${duration} minutes`}.`;
-        
-        console.log(`Admin ${users.get(ws).username} muted ${targetUsername} for ${duration}m`);
-        
-        const targetSocket = findSocketByUsername(targetUsername);
-        if (targetSocket) {
-            targetSocket.send(JSON.stringify({ type: 'muted', reason }));
-        }
-        
-        ws.send(JSON.stringify({ type: 'admin_confirm', message: `User ${targetUsername} has been muted.` }));
-        broadcastUserList(); // Update list to show mute status
-    } else {
-        ws.send(JSON.stringify({ type: 'error', message: `User ${targetUsername} not found.` }));
-    }
-}
-
-function handleAdminBan(ws, message) {
-    const { targetUsername, duration, banType } = message;
-    const targetUser = findUserByUsername(targetUsername);
-    
-    if (!targetUser) {
-         ws.send(JSON.stringify({ type: 'error', message: `User ${targetUsername} not found.` }));
-         return;
-    }
-    
-    const expiryDate = calculateExpiry(duration);
-    
-    if (banType === 'username') {
-        bannedUsernames.add(targetUsername); // Note: Username bans are permanent in this simple model
-        console.log(`Admin ${users.get(ws).username} banned username ${targetUsername}`);
-        ws.send(JSON.stringify({ type: 'admin_confirm', message: `Username ${targetUsername} has been permanently banned.` }));
-    
-    } else if (banType === 'ip') {
-        bannedIPs.set(targetUser.ip, { expires: expiryDate });
-        const banLength = duration === 0 ? 'permanently' : `for ${duration} minutes`;
-        console.log(`Admin ${users.get(ws).username} banned IP ${targetUser.ip} ${banLength}`);
-        ws.send(JSON.stringify({ type: 'admin_confirm', message: `IP ${targetUser.ip} for ${targetUsername} has been banned ${banLength}.` }));
-    
-    } else {
-         ws.send(JSON.stringify({ type: 'error', message: `Invalid ban type.` }));
-         return;
-    }
-    
-    // Kick the user after banning
-    const targetSocket = findSocketByUsername(targetUsername);
-    if (targetSocket) {
-        targetSocket.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'You have been banned from the server.', 
-            kick: true 
-        }));
-        targetSocket.terminate();
-    }
-}
-
-function handleAdminClear(ws, message) {
-    const { channel } = message;
-    if (channels[channel]) {
-        channels[channel] = [];
-        console.log(`Admin ${users.get(ws).username} cleared channel #${channel}`);
-        
-        // Broadcast an empty history to clear everyone's screen
-        broadcast({
-            type: 'history',
-            channel,
-            messages: []
-        });
-        
-        ws.send(JSON.stringify({ type: 'admin_confirm', message: `Channel #${channel} has been cleared.` }));
-    } else {
-         ws.send(JSON.stringify({ type: 'error', message: `Channel ${channel} not found.` }));
-    }
-}
-
-
 // Broadcast user list
 function broadcastUserList() {
-    // NEW: Send a richer user object
-    const userList = Array.from(users.values()).map(u => ({
-        username: u.username,
-        isAdmin: u.isAdmin,
-        isMuted: u.muteExpires && u.muteExpires > new Date()
-    }));
+    const userList = Array.from(users.values()).map(u => u.username);
     
     console.log('Broadcasting user list:', userList);
     
@@ -475,7 +207,7 @@ function broadcast(message, excludeWs = null) {
         }
     });
     
-    // console.log(`Broadcast sent to ${sentCount} clients`); // This is too noisy
+    console.log(`Broadcast sent to ${sentCount} clients`);
 }
 
 // Generate unique ID
@@ -483,22 +215,48 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// --- REST API (unchanged, but kept) ---
+// REST API endpoints
 app.get('/api/channels', (req, res) => {
     res.json({
         channels: Object.keys(channels)
     });
 });
-// ... (other API routes) ...
+
+app.get('/api/channels/:channel/messages', (req, res) => {
+    const { channel } = req.params;
+    const limit = parseInt(req.query.limit) || 50;
+    
+    if (channels[channel]) {
+        const messages = channels[channel].slice(-limit);
+        res.json({ messages });
+    } else {
+        res.status(404).json({ error: 'Channel not found' });
+    }
+});
+
+app.post('/api/channels', (req, res) => {
+    const { name } = req.body;
+    
+    if (!name || channels[name]) {
+        return res.status(400).json({ error: 'Invalid or duplicate channel name' });
+    }
+    
+    channels[name] = [];
+    
+    broadcast({
+        type: 'channelCreated',
+        channel: name
+    });
+    
+    res.json({ success: true, channel: name });
+});
 
 // Health check
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok',
         users: users.size,
-        channels: Object.keys(channels).length,
-        bannedIPs: bannedIPs.size,
-        bannedUsernames: bannedUsernames.size
+        channels: Object.keys(channels).length
     });
 });
 
