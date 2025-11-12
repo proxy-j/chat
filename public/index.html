@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Chet</title>
+    <title>Simple Chat</title>
     <style>
         * {
             margin: 0;
@@ -47,6 +47,19 @@
             padding: 8px;
         }
 
+        .channel-section {
+            margin-bottom: 16px;
+        }
+
+        .section-header {
+            color: #96989d;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            padding: 0 8px;
+        }
+
         .channel {
             padding: 8px 12px;
             margin: 2px 0;
@@ -55,6 +68,7 @@
             cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             font-size: 14px;
             transition: all 0.15s;
         }
@@ -69,11 +83,42 @@
             color: #fff;
         }
 
-        .channel::before {
+        .channel-name {
+            display: flex;
+            align-items: center;
+        }
+
+        .channel-name::before {
             content: '#';
             margin-right: 6px;
             font-weight: 600;
             color: #72767d;
+        }
+
+        .channel.private .channel-name::before {
+            content: '👤';
+            margin-right: 6px;
+        }
+
+        .close-dm {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: #96989d;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 16px;
+            transition: all 0.15s;
+        }
+
+        .channel:hover .close-dm {
+            opacity: 1;
+        }
+
+        .close-dm:hover {
+            background: #ed4245;
+            color: #fff;
         }
 
         .online-users {
@@ -97,12 +142,44 @@
             font-size: 14px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            border-radius: 4px;
+            transition: background 0.15s;
         }
 
-        .user-list-item::before {
+        .user-list-item:hover {
+            background: #3a3c42;
+        }
+
+        .user-name {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-name::before {
             content: '●';
             color: #3ba55d;
             margin-right: 6px;
+        }
+
+        .dm-btn {
+            opacity: 0;
+            background: #5865f2;
+            color: #fff;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .user-list-item:hover .dm-btn {
+            opacity: 1;
+        }
+
+        .dm-btn:hover {
+            background: #4752c4;
         }
 
         .user-area {
@@ -168,15 +245,19 @@
             color: #fff;
         }
 
-        .channel-name {
+        .channel-name-header {
             font-weight: 600;
             font-size: 16px;
         }
 
-        .channel-name::before {
+        .channel-name-header::before {
             content: '#';
             margin-right: 4px;
             color: #72767d;
+        }
+
+        .channel-name-header.private::before {
+            content: '👤';
         }
 
         .typing-indicator {
@@ -296,6 +377,83 @@
             cursor: not-allowed;
         }
 
+        .notifications {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+
+        .notification {
+            background: #2f3136;
+            border: 1px solid #202225;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-header {
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .notification-body {
+            color: #dcddde;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .notification-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-accept {
+            background: #3ba55d;
+            color: #fff;
+        }
+
+        .btn-accept:hover {
+            background: #2d7d46;
+        }
+
+        .btn-decline {
+            background: #ed4245;
+            color: #fff;
+        }
+
+        .btn-decline:hover {
+            background: #c03537;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -312,31 +470,31 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #1a1c1f;
         }
-
-        .debug-info {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-family: monospace;
-            display: none;
-        }
     </style>
 </head>
 <body>
+    <div class="notifications" id="notifications"></div>
+
     <div class="container">
         <div class="sidebar">
-            <div class="server-header">
-                The Chet
-            </div>
+            <div class="server-header">My Server</div>
             <div class="channels" id="channelList">
-                <div class="channel active" data-channel="general">general</div>
-                <div class="channel" data-channel="random">random</div>
-                <div class="channel" data-channel="gaming">gaming</div>
+                <div class="channel-section">
+                    <div class="section-header">Channels</div>
+                    <div class="channel active" data-channel="general">
+                        <span class="channel-name">general</span>
+                    </div>
+                    <div class="channel" data-channel="random">
+                        <span class="channel-name">random</span>
+                    </div>
+                    <div class="channel" data-channel="gaming">
+                        <span class="channel-name">gaming</span>
+                    </div>
+                </div>
+                <div class="channel-section">
+                    <div class="section-header">Direct Messages</div>
+                    <div id="dmList"></div>
+                </div>
             </div>
             <div class="online-users">
                 <div class="online-header">Online Users</div>
@@ -353,392 +511,50 @@
 
         <div class="main-content">
             <div class="chat-header">
-                <div class="channel-name" id="currentChannel">general</div>
+                <div class="channel-name-header" id="currentChannel">general</div>
                 <div class="typing-indicator" id="typingIndicator"></div>
             </div>
             <div class="messages" id="messageArea"></div>
             <div class="input-area">
                 <div class="input-wrapper">
-                    <input 
-                        type="text" 
-                        class="message-input" 
-                        id="messageInput" 
-                        placeholder="Message #general"
-                    >
+                    <input type="text" class="message-input" id="messageInput" placeholder="Message #general">
                     <button class="send-btn" id="sendBtn">Send</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="debug-info" id="debugInfo"></div>
-
     <script>
-        // Configuration - FIXED: Use correct WebSocket protocol
-        const WS_URL = window.location.protocol === 'https:' 
-            ? `wss://${window.location.host}` 
-            : `ws://${window.location.hostname}:${window.location.port || 3000}`;
-        
-        console.log('WebSocket URL:', WS_URL);
-        
-        // State
-        const state = {
-            currentChannel: 'general',
-            username: '',
-            ws: null,
-            connected: false,
-            messages: {},
-            users: [],
-            typingUsers: {}
-        };
-
-        // DOM Elements
-        const messageArea = document.getElementById('messageArea');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const channelList = document.getElementById('channelList');
-        const currentChannelEl = document.getElementById('currentChannel');
-        const usernameDisplay = document.getElementById('usernameDisplay');
-        const userAvatar = document.getElementById('userAvatar');
-        const connectionStatus = document.getElementById('connectionStatus');
-        const userList = document.getElementById('userList');
-        const typingIndicator = document.getElementById('typingIndicator');
-
+        const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}` : `ws://${window.location.hostname}:${window.location.port || 3000}`;
+        const state = {currentChannel:'general',currentChatType:'channel',currentPrivateChat:null,username:'',ws:null,connected:false,messages:{},privateMessages:{},users:[],typingUsers:{},privateChats:{}};
+        const messageArea=document.getElementById('messageArea'),messageInput=document.getElementById('messageInput'),sendBtn=document.getElementById('sendBtn'),channelList=document.getElementById('channelList'),dmList=document.getElementById('dmList'),currentChannelEl=document.getElementById('currentChannel'),usernameDisplay=document.getElementById('usernameDisplay'),userAvatar=document.getElementById('userAvatar'),connectionStatus=document.getElementById('connectionStatus'),userList=document.getElementById('userList'),typingIndicator=document.getElementById('typingIndicator'),notifications=document.getElementById('notifications');
         let typingTimeout;
-
-        // Initialize
-        function init() {
-            const savedUsername = prompt('Enter your username:', 'User') || 'User';
-            state.username = savedUsername;
-            usernameDisplay.textContent = savedUsername;
-            userAvatar.textContent = savedUsername.charAt(0).toUpperCase();
-
-            connectWebSocket();
-        }
-
-        // WebSocket connection
-        function connectWebSocket() {
-            console.log('Attempting to connect to:', WS_URL);
-            
-            try {
-                state.ws = new WebSocket(WS_URL);
-            } catch (error) {
-                console.error('Failed to create WebSocket:', error);
-                setTimeout(connectWebSocket, 3000);
-                return;
-            }
-
-            state.ws.onopen = () => {
-                console.log('✓ Connected to server');
-                state.connected = true;
-                connectionStatus.classList.add('connected');
-                sendBtn.disabled = false;
-                
-                // Join server
-                const joinMsg = {
-                    type: 'join',
-                    username: state.username
-                };
-                console.log('Sending join message:', joinMsg);
-                send(joinMsg);
-
-                // Get history for current channel
-                send({
-                    type: 'getHistory',
-                    channel: state.currentChannel
-                });
-            };
-
-            state.ws.onmessage = (event) => {
-                console.log('Received from server:', event.data);
-                try {
-                    const data = JSON.parse(event.data);
-                    handleServerMessage(data);
-                } catch (error) {
-                    console.error('Error parsing server message:', error);
-                }
-            };
-
-            state.ws.onclose = () => {
-                console.log('✗ Disconnected from server');
-                state.connected = false;
-                connectionStatus.classList.remove('connected');
-                sendBtn.disabled = true;
-                
-                // Reconnect after 3 seconds
-                setTimeout(connectWebSocket, 3000);
-            };
-
-            state.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
-        }
-
-        // Handle server messages
-        function handleServerMessage(data) {
-            console.log('Handling message type:', data.type);
-            
-            switch (data.type) {
-                case 'connected':
-                    console.log('Server confirmed connection');
-                    break;
-                case 'joined':
-                    console.log('Successfully joined server');
-                    break;
-                case 'message':
-                    console.log('Received chat message:', data.message);
-                    addMessageToChannel(data.message);
-                    break;
-                case 'history':
-                    console.log(`Loaded ${data.messages.length} messages for #${data.channel}`);
-                    loadHistory(data.channel, data.messages);
-                    break;
-                case 'userList':
-                    console.log('Updated user list:', data.users);
-                    updateUserList(data.users);
-                    break;
-                case 'typing':
-                    handleTypingIndicator(data);
-                    break;
-                case 'error':
-                    console.error('Server error:', data.message);
-                    break;
-                default:
-                    console.log('Unknown message type:', data.type);
-            }
-        }
-
-        // Send message to server
-        function send(data) {
-            if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-                const jsonData = JSON.stringify(data);
-                console.log('Sending to server:', jsonData);
-                state.ws.send(jsonData);
-            } else {
-                console.error('Cannot send - WebSocket not open. State:', state.ws?.readyState);
-            }
-        }
-
-        // Add message
-        function addMessage() {
-            const text = messageInput.value.trim();
-            console.log('addMessage called, text:', text, 'connected:', state.connected);
-            
-            if (!text) {
-                console.log('Empty message, ignoring');
-                return;
-            }
-            
-            if (!state.connected) {
-                console.log('Not connected to server');
-                alert('Not connected to server. Please wait...');
-                return;
-            }
-
-            const messageData = {
-                type: 'message',
-                channel: state.currentChannel,
-                text: text
-            };
-            
-            console.log('Sending message:', messageData);
-            send(messageData);
-
-            messageInput.value = '';
-            stopTyping();
-        }
-
-        // Add message to channel
-        function addMessageToChannel(message) {
-            if (!state.messages[message.channel]) {
-                state.messages[message.channel] = [];
-            }
-            state.messages[message.channel].push(message);
-
-            if (message.channel === state.currentChannel) {
-                renderMessages();
-            }
-        }
-
-        // Load history
-        function loadHistory(channel, messages) {
-            state.messages[channel] = messages;
-            if (channel === state.currentChannel) {
-                renderMessages();
-            }
-        }
-
-        // Render messages
-        function renderMessages() {
-            const messages = state.messages[state.currentChannel] || [];
-            console.log(`Rendering ${messages.length} messages for #${state.currentChannel}`);
-            messageArea.innerHTML = '';
-
-            messages.forEach(msg => {
-                const msgEl = document.createElement('div');
-                msgEl.className = 'message';
-
-                const avatar = document.createElement('div');
-                avatar.className = 'message-avatar';
-                avatar.textContent = msg.author.charAt(0).toUpperCase();
-
-                const content = document.createElement('div');
-                content.className = 'message-content';
-
-                const header = document.createElement('div');
-                header.className = 'message-header';
-
-                const author = document.createElement('span');
-                author.className = 'message-author';
-                author.textContent = msg.author;
-
-                const timestamp = document.createElement('span');
-                timestamp.className = 'message-timestamp';
-                timestamp.textContent = formatTime(new Date(msg.timestamp));
-
-                const text = document.createElement('div');
-                text.className = 'message-text';
-                text.textContent = msg.text;
-
-                header.appendChild(author);
-                header.appendChild(timestamp);
-                content.appendChild(header);
-                content.appendChild(text);
-                msgEl.appendChild(avatar);
-                msgEl.appendChild(content);
-                messageArea.appendChild(msgEl);
-            });
-
-            messageArea.scrollTop = messageArea.scrollHeight;
-        }
-
-        // Update user list
-        function updateUserList(users) {
-            state.users = users;
-            userList.innerHTML = '';
-            
-            users.forEach(username => {
-                const userEl = document.createElement('div');
-                userEl.className = 'user-list-item';
-                userEl.textContent = username;
-                userList.appendChild(userEl);
-            });
-        }
-
-        // Typing indicator
-        function handleTypingIndicator(data) {
-            if (data.channel !== state.currentChannel) return;
-
-            if (data.isTyping) {
-                state.typingUsers[data.username] = true;
-            } else {
-                delete state.typingUsers[data.username];
-            }
-
-            updateTypingIndicator();
-        }
-
-        function updateTypingIndicator() {
-            const typing = Object.keys(state.typingUsers);
-            if (typing.length === 0) {
-                typingIndicator.textContent = '';
-            } else if (typing.length === 1) {
-                typingIndicator.textContent = `${typing[0]} is typing...`;
-            } else {
-                typingIndicator.textContent = `${typing.length} people are typing...`;
-            }
-        }
-
-        function startTyping() {
-            if (!state.connected) return;
-            
-            send({
-                type: 'typing',
-                channel: state.currentChannel,
-                isTyping: true
-            });
-
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(stopTyping, 3000);
-        }
-
-        function stopTyping() {
-            if (!state.connected) return;
-            
-            send({
-                type: 'typing',
-                channel: state.currentChannel,
-                isTyping: false
-            });
-        }
-
-        // Format time
-        function formatTime(date) {
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
-
-        // Switch channel
-        function switchChannel(channel) {
-            console.log('Switching to channel:', channel);
-            state.currentChannel = channel;
-            currentChannelEl.textContent = channel;
-            messageInput.placeholder = `Message #${channel}`;
-
-            document.querySelectorAll('.channel').forEach(ch => {
-                ch.classList.remove('active');
-                if (ch.dataset.channel === channel) {
-                    ch.classList.add('active');
-                }
-            });
-
-            // Get history if not loaded
-            if (!state.messages[channel]) {
-                send({
-                    type: 'getHistory',
-                    channel: channel
-                });
-            } else {
-                renderMessages();
-            }
-
-            state.typingUsers = {};
-            updateTypingIndicator();
-        }
-
-        // Event listeners
-        sendBtn.addEventListener('click', (e) => {
-            console.log('Send button clicked');
-            e.preventDefault();
-            addMessage();
-        });
-        
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Enter key pressed');
-                e.preventDefault();
-                addMessage();
-            }
-        });
-
-        messageInput.addEventListener('input', () => {
-            if (messageInput.value.length > 0) {
-                startTyping();
-            } else {
-                stopTyping();
-            }
-        });
-
-        channelList.addEventListener('click', (e) => {
-            const channel = e.target.closest('.channel');
-            if (channel) {
-                switchChannel(channel.dataset.channel);
-            }
-        });
-
-        // Initialize app
-        console.log('Initializing chat application...');
+        function init(){const n=prompt('Enter your username:','User')||'User';state.username=n;usernameDisplay.textContent=n;userAvatar.textContent=n.charAt(0).toUpperCase();connectWebSocket()}
+        function connectWebSocket(){try{state.ws=new WebSocket(WS_URL)}catch(e){setTimeout(connectWebSocket,3000);return}state.ws.onopen=()=>{state.connected=true;connectionStatus.classList.add('connected');sendBtn.disabled=false;send({type:'join',username:state.username});send({type:'getHistory',channel:state.currentChannel})};state.ws.onmessage=e=>{try{handleServerMessage(JSON.parse(e.data))}catch(er){}};state.ws.onclose=()=>{state.connected=false;connectionStatus.classList.remove('connected');sendBtn.disabled=true;setTimeout(connectWebSocket,3000)};state.ws.onerror=e=>{}}
+        function handleServerMessage(d){switch(d.type){case'message':addMessageToChannel(d.message);break;case'history':loadHistory(d.channel,d.messages);break;case'userList':updateUserList(d.users);break;case'typing':handleTypingIndicator(d);break;case'privateChatRequest':showPrivateChatRequest(d.from);break;case'privateChatAccepted':handlePrivateChatAccepted(d.chatId,d.with);break;case'privateChatRejected':alert(`${d.by} declined`);break;case'privateMessage':addPrivateMessage(d.message);break;case'privateHistory':loadPrivateHistory(d.chatId,d.messages);break}}
+        function send(d){if(state.ws&&state.ws.readyState===WebSocket.OPEN)state.ws.send(JSON.stringify(d))}
+        function showPrivateChatRequest(from){const n=document.createElement('div');n.className='notification';n.innerHTML=`<div class="notification-header">Private Chat Request</div><div class="notification-body">${from} wants to chat</div><div class="notification-actions"><button class="notification-btn btn-accept">Accept</button><button class="notification-btn btn-decline">Decline</button></div>`;n.querySelector('.btn-accept').onclick=()=>{send({type:'privateChatResponse',from,accepted:true});n.remove()};n.querySelector('.btn-decline').onclick=()=>{send({type:'privateChatResponse',from,accepted:false});n.remove()};notifications.appendChild(n)}
+        function handlePrivateChatAccepted(chatId,withUser){state.privateChats[chatId]=withUser;addDMToList(chatId,withUser);switchToPrivateChat(chatId,withUser)}
+        function addDMToList(chatId,username){if(document.querySelector(`[data-chat-id="${chatId}"]`))return;const d=document.createElement('div');d.className='channel private';d.dataset.chatId=chatId;d.innerHTML=`<span class="channel-name">${username}</span><button class="close-dm">×</button>`;d.querySelector('.close-dm').onclick=e=>{e.stopPropagation();d.remove();delete state.privateChats[chatId];delete state.privateMessages[chatId];if(state.currentPrivateChat===chatId)switchChannel('general')};d.onclick=()=>switchToPrivateChat(chatId,username);dmList.appendChild(d)}
+        function switchToPrivateChat(chatId,username){state.currentChatType='private';state.currentPrivateChat=chatId;state.currentChannel=username;currentChannelEl.textContent=username;currentChannelEl.classList.add('private');messageInput.placeholder=`Message @${username}`;document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));const dm=document.querySelector(`[data-chat-id="${chatId}"]`);if(dm)dm.classList.add('active');if(!state.privateMessages[chatId])send({type:'getPrivateHistory',chatId});else renderMessages();state.typingUsers={};updateTypingIndicator()}
+        function requestPrivateChat(username){if(username===state.username)return;send({type:'privateChatRequest',targetUsername:username})}
+        function addMessage(){const t=messageInput.value.trim();if(!t||!state.connected)return;if(state.currentChatType==='private')send({type:'privateMessage',chatId:state.currentPrivateChat,text:t,targetUsername:state.privateChats[state.currentPrivateChat]});else send({type:'message',channel:state.currentChannel,text:t});messageInput.value='';stopTyping()}
+        function addMessageToChannel(m){if(!state.messages[m.channel])state.messages[m.channel]=[];state.messages[m.channel].push(m);if(m.channel===state.currentChannel&&state.currentChatType==='channel')renderMessages()}
+        function addPrivateMessage(m){if(!state.privateMessages[m.chatId])state.privateMessages[m.chatId]=[];state.privateMessages[m.chatId].push(m);if(m.chatId===state.currentPrivateChat&&state.currentChatType==='private')renderMessages()}
+        function loadHistory(c,m){state.messages[c]=m;if(c===state.currentChannel&&state.currentChatType==='channel')renderMessages()}
+        function loadPrivateHistory(c,m){state.privateMessages[c]=m;if(c===state.currentPrivateChat&&state.currentChatType==='private')renderMessages()}
+        function renderMessages(){let msgs=state.currentChatType==='private'?state.privateMessages[state.currentPrivateChat]||[]:state.messages[state.currentChannel]||[];messageArea.innerHTML='';msgs.forEach(m=>{const d=document.createElement('div');d.className='message';d.innerHTML=`<div class="message-avatar">${m.author.charAt(0).toUpperCase()}</div><div class="message-content"><div class="message-header"><span class="message-author">${m.author}</span><span class="message-timestamp">${formatTime(new Date(m.timestamp))}</span></div><div class="message-text">${m.text}</div></div>`;messageArea.appendChild(d)});messageArea.scrollTop=messageArea.scrollHeight}
+        function updateUserList(users){state.users=users;userList.innerHTML='';users.forEach(u=>{if(u===state.username)return;const el=document.createElement('div');el.className='user-list-item';el.innerHTML=`<span class="user-name">${u}</span><button class="dm-btn">DM</button>`;el.querySelector('.dm-btn').onclick=()=>requestPrivateChat(u);userList.appendChild(el)})}
+        function handleTypingIndicator(d){if(state.currentChatType==='private'){if(d.isPrivate&&d.username===state.privateChats[state.currentPrivateChat]){d.isTyping?state.typingUsers[d.username]=true:delete state.typingUsers[d.username];updateTypingIndicator()}}else{if(d.channel===state.currentChannel&&!d.isPrivate){d.isTyping?state.typingUsers[d.username]=true:delete state.typingUsers[d.username];updateTypingIndicator()}}}
+        function updateTypingIndicator(){const t=Object.keys(state.typingUsers);typingIndicator.textContent=t.length===0?'':t.length===1?`${t[0]} is typing...`:`${t.length} people are typing...`}
+        function startTyping(){if(!state.connected)return;if(state.currentChatType==='private')send({type:'typing',channel:state.currentPrivateChat,isTyping:true,isPrivate:true,targetUsername:state.privateChats[state.currentPrivateChat]});else send({type:'typing',channel:state.currentChannel,isTyping:true});clearTimeout(typingTimeout);typingTimeout=setTimeout(stopTyping,3000)}
+        function stopTyping(){if(!state.connected)return;if(state.currentChatType==='private')send({type:'typing',channel:state.currentPrivateChat,isTyping:false,isPrivate:true,targetUsername:state.privateChats[state.currentPrivateChat]});else send({type:'typing',channel:state.currentChannel,isTyping:false})}
+        function formatTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
+        function switchChannel(c){state.currentChatType='channel';state.currentPrivateChat=null;state.currentChannel=c;currentChannelEl.textContent=c;currentChannelEl.classList.remove('private');messageInput.placeholder=`Message #${c}`;document.querySelectorAll('.channel').forEach(ch=>{ch.classList.remove('active');if(ch.dataset.channel===c)ch.classList.add('active')});if(!state.messages[c])send({type:'getHistory',channel:c});else renderMessages();state.typingUsers={};updateTypingIndicator()}
+        sendBtn.onclick=e=>{e.preventDefault();addMessage()};
+        messageInput.onkeypress=e=>{if(e.key==='Enter'){e.preventDefault();addMessage()}};
+        messageInput.oninput=()=>{messageInput.value.length>0?startTyping():stopTyping()};
+        channelList.onclick=e=>{const c=e.target.closest('.channel');if(c&&c.dataset.channel)switchChannel(c.dataset.channel)};
         init();
     </script>
 </body>
