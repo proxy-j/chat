@@ -20,6 +20,8 @@ const channels = {
 };
 
 const users = new Map(); // WebSocket -> user info
+const privateChats = new Map(); // chatId -> messages array
+const userSocketMap = new Map(); // username -> WebSocket
 
 // WebSocket connection handler
 wss.on('connection', (ws) => {
@@ -49,6 +51,7 @@ wss.on('connection', (ws) => {
         const user = users.get(ws);
         if (user) {
             console.log(`User ${user.username} disconnected`);
+            userSocketMap.delete(user.username);
             users.delete(ws);
             broadcastUserList();
         }
@@ -76,6 +79,18 @@ function handleMessage(ws, message) {
         case 'typing':
             handleTyping(ws, message);
             break;
+        case 'privateChatRequest':
+            handlePrivateChatRequest(ws, message);
+            break;
+        case 'privateChatResponse':
+            handlePrivateChatResponse(ws, message);
+            break;
+        case 'privateMessage':
+            handlePrivateMessage(ws, message);
+            break;
+        case 'getPrivateHistory':
+            handleGetPrivateHistory(ws, message);
+            break;
         default:
             console.log('Unknown message type:', message.type);
     }
@@ -90,6 +105,8 @@ function handleJoin(ws, message) {
         username,
         id: generateId()
     });
+    
+    userSocketMap.set(username, ws);
 
     // Send welcome message
     ws.send(JSON.stringify({
@@ -147,6 +164,144 @@ function handleChatMessage(ws, message) {
     broadcast(broadcastData);
 }
 
+// Handle private chat request
+function handlePrivateChatRequest(ws, message) {
+    const sender = users.get(ws);
+    if (!sender) return;
+
+    const { targetUsername } = message;
+    const targetWs = userSocketMap.get(targetUsername);
+
+    if (!targetWs) {
+        ws.send(JSON.stringify({
+            type: 'error',
+            message: 'User not found or offline'
+        }));
+        return;
+    }
+
+    console.log(`Private chat request from ${sender.username} to ${targetUsername}`);
+
+    // Send request to target user
+    targetWs.send(JSON.stringify({
+        type: 'privateChatRequest',
+        from: sender.username,
+        requestId: generateId()
+    }));
+}
+
+// Handle private chat response
+function handlePrivateChatResponse(ws, message) {
+    const responder = users.get(ws);
+    if (!responder) return;
+
+    const { accepted, from } = message;
+    const requesterWs = userSocketMap.get(from);
+
+    if (!requesterWs) {
+        ws.send(JSON.stringify({
+            type: 'error',
+            message: 'User no longer online'
+        }));
+        return;
+    }
+
+    if (accepted) {
+        // Create private chat ID (sorted usernames for consistency)
+        const users = [from, responder.username].sort();
+        const chatId = `private_${users[0]}_${users[1]}`;
+
+        console.log(`Private chat accepted: ${chatId}`);
+
+        // Initialize chat if it doesn't exist
+        if (!privateChats.has(chatId)) {
+            privateChats.set(chatId, []);
+        }
+
+        // Notify both users
+        const chatData = {
+            type: 'privateChatAccepted',
+            chatId: chatId,
+            with: responder.username
+        };
+
+        requesterWs.send(JSON.stringify(chatData));
+
+        ws.send(JSON.stringify({
+            type: 'privateChatAccepted',
+            chatId: chatId,
+            with: from
+        }));
+    } else {
+        // Notify requester of rejection
+        requesterWs.send(JSON.stringify({
+            type: 'privateChatRejected',
+            by: responder.username
+        }));
+    }
+}
+
+// Handle private message
+function handlePrivateMessage(ws, message) {
+    const sender = users.get(ws);
+    if (!sender) return;
+
+    const { chatId, text, targetUsername } = message;
+    
+    const privateMessage = {
+        id: generateId(),
+        author: sender.username,
+        text,
+        chatId,
+        timestamp: new Date().toISOString()
+    };
+
+    // Store message
+    if (!privateChats.has(chatId)) {
+        privateChats.set(chatId, []);
+    }
+    
+    const chatMessages = privateChats.get(chatId);
+    chatMessages.push(privateMessage);
+
+    // Keep only last 100 messages
+    if (chatMessages.length > 100) {
+        chatMessages.shift();
+    }
+
+    console.log(`Private message from ${sender.username} in ${chatId}`);
+
+    // Send to both users
+    const targetWs = userSocketMap.get(targetUsername);
+    
+    const messageData = {
+        type: 'privateMessage',
+        message: privateMessage
+    };
+
+    // Send to sender
+    ws.send(JSON.stringify(messageData));
+
+    // Send to recipient if online
+    if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+        targetWs.send(JSON.stringify(messageData));
+    }
+}
+
+// Get private chat history
+function handleGetPrivateHistory(ws, message) {
+    const { chatId } = message;
+    console.log(`Private history requested for: ${chatId}`);
+    
+    const messages = privateChats.get(chatId) || [];
+    
+    ws.send(JSON.stringify({
+        type: 'privateHistory',
+        chatId,
+        messages
+    }));
+}
+
 // Get channel history
 function handleGetHistory(ws, message) {
     const { channel } = message;
@@ -173,14 +328,29 @@ function handleTyping(ws, message) {
     const user = users.get(ws);
     if (!user) return;
 
-    const { channel, isTyping } = message;
+    const { channel, isTyping, isPrivate, targetUsername } = message;
     
-    broadcast({
-        type: 'typing',
-        username: user.username,
-        channel,
-        isTyping
-    }, ws);
+    if (isPrivate && targetUsername) {
+        // Send typing indicator only to target user
+        const targetWs = userSocketMap.get(targetUsername);
+        if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+            targetWs.send(JSON.stringify({
+                type: 'typing',
+                username: user.username,
+                channel,
+                isTyping,
+                isPrivate: true
+            }));
+        }
+    } else {
+        // Broadcast to channel
+        broadcast({
+            type: 'typing',
+            username: user.username,
+            channel,
+            isTyping
+        }, ws);
+    }
 }
 
 // Broadcast user list
@@ -256,7 +426,8 @@ app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok',
         users: users.size,
-        channels: Object.keys(channels).length
+        channels: Object.keys(channels).length,
+        privateChats: privateChats.size
     });
 });
 
