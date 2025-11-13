@@ -9,25 +9,25 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
 // In-memory storage
 const channels = {
     general: [],
     random: [],
-    gaming: []
+    gaming: [],
+    memes: []
 };
 
-const users = new Map(); // WebSocket -> user info
-const privateChats = new Map(); // chatId -> messages array
-const userSocketMap = new Map(); // username -> WebSocket
+const users = new Map();
+const privateChats = new Map();
+const userSocketMap = new Map();
 
 // WebSocket connection handler
 wss.on('connection', (ws) => {
     console.log('New client connected');
     
-    // Send immediate confirmation
     ws.send(JSON.stringify({
         type: 'connected',
         message: 'Connected to server'
@@ -35,7 +35,7 @@ wss.on('connection', (ws) => {
     
     ws.on('message', (data) => {
         try {
-            console.log('Received message:', data.toString());
+            console.log('Received message type');
             const message = JSON.parse(data.toString());
             handleMessage(ws, message);
         } catch (error) {
@@ -73,6 +73,9 @@ function handleMessage(ws, message) {
         case 'message':
             handleChatMessage(ws, message);
             break;
+        case 'imageMessage':
+            handleImageMessage(ws, message);
+            break;
         case 'getHistory':
             handleGetHistory(ws, message);
             break;
@@ -87,6 +90,9 @@ function handleMessage(ws, message) {
             break;
         case 'privateMessage':
             handlePrivateMessage(ws, message);
+            break;
+        case 'privateImageMessage':
+            handlePrivateImageMessage(ws, message);
             break;
         case 'getPrivateHistory':
             handleGetPrivateHistory(ws, message);
@@ -108,16 +114,13 @@ function handleJoin(ws, message) {
     
     userSocketMap.set(username, ws);
 
-    // Send welcome message
     ws.send(JSON.stringify({
         type: 'joined',
         username,
         channels: Object.keys(channels)
     }));
 
-    // Broadcast updated user list
     broadcastUserList();
-
     console.log(`User ${username} joined. Total users: ${users.size}`);
 }
 
@@ -130,7 +133,7 @@ function handleChatMessage(ws, message) {
     }
 
     const { channel, text } = message;
-    console.log(`Message from ${user.username} in #${channel}: ${text}`);
+    console.log(`Message from ${user.username} in #${channel}`);
     
     const chatMessage = {
         id: generateId(),
@@ -140,28 +143,106 @@ function handleChatMessage(ws, message) {
         timestamp: new Date().toISOString()
     };
 
-    // Store message
     if (channels[channel]) {
         channels[channel].push(chatMessage);
         
-        // Keep only last 100 messages per channel
         if (channels[channel].length > 100) {
             channels[channel].shift();
         }
         
         console.log(`Message stored. Channel ${channel} now has ${channels[channel].length} messages`);
+    }
+
+    broadcast({
+        type: 'message',
+        message: chatMessage
+    });
+}
+
+// Handle image messages
+function handleImageMessage(ws, message) {
+    const user = users.get(ws);
+    if (!user) {
+        console.log('Image from unknown user, ignoring');
+        return;
+    }
+
+    const { channel, imageData, fileName } = message;
+    console.log(`Image from ${user.username} in #${channel}, size: ${imageData ? imageData.length : 0} bytes`);
+    
+    const imageMessage = {
+        id: generateId(),
+        author: user.username,
+        imageData: imageData,
+        fileName: fileName,
+        channel: channel,
+        timestamp: new Date().toISOString(),
+        isImage: true
+    };
+
+    if (channels[channel]) {
+        channels[channel].push(imageMessage);
+        
+        if (channels[channel].length > 100) {
+            channels[channel].shift();
+        }
+        
+        console.log(`Image stored. Channel ${channel} now has ${channels[channel].length} messages`);
     } else {
         console.log(`Channel ${channel} not found`);
     }
 
-    // Broadcast to all connected clients
     const broadcastData = {
         type: 'message',
-        message: chatMessage
+        message: imageMessage
     };
     
-    console.log('Broadcasting message to all clients');
+    console.log('Broadcasting image message to all clients');
     broadcast(broadcastData);
+}
+
+// Handle private image messages
+function handlePrivateImageMessage(ws, message) {
+    const sender = users.get(ws);
+    if (!sender) return;
+
+    const { chatId, imageData, fileName, targetUsername } = message;
+    
+    const imageMessage = {
+        id: generateId(),
+        author: sender.username,
+        imageData,
+        fileName,
+        chatId,
+        timestamp: new Date().toISOString(),
+        isImage: true
+    };
+
+    if (!privateChats.has(chatId)) {
+        privateChats.set(chatId, []);
+    }
+    
+    const chatMessages = privateChats.get(chatId);
+    chatMessages.push(imageMessage);
+
+    if (chatMessages.length > 100) {
+        chatMessages.shift();
+    }
+
+    console.log(`Private image from ${sender.username} in ${chatId}`);
+
+    const targetWs = userSocketMap.get(targetUsername);
+    
+    const messageData = {
+        type: 'privateMessage',
+        message: imageMessage
+    };
+
+    ws.send(JSON.stringify(messageData));
+
+    if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+        targetWs.send(JSON.stringify(messageData));
+    }
 }
 
 // Handle private chat request
@@ -182,7 +263,6 @@ function handlePrivateChatRequest(ws, message) {
 
     console.log(`Private chat request from ${sender.username} to ${targetUsername}`);
 
-    // Send request to target user
     targetWs.send(JSON.stringify({
         type: 'privateChatRequest',
         from: sender.username,
@@ -207,18 +287,15 @@ function handlePrivateChatResponse(ws, message) {
     }
 
     if (accepted) {
-        // Create private chat ID (sorted usernames for consistency)
         const users = [from, responder.username].sort();
         const chatId = `private_${users[0]}_${users[1]}`;
 
         console.log(`Private chat accepted: ${chatId}`);
 
-        // Initialize chat if it doesn't exist
         if (!privateChats.has(chatId)) {
             privateChats.set(chatId, []);
         }
 
-        // Notify both users
         const chatData = {
             type: 'privateChatAccepted',
             chatId: chatId,
@@ -233,7 +310,6 @@ function handlePrivateChatResponse(ws, message) {
             with: from
         }));
     } else {
-        // Notify requester of rejection
         requesterWs.send(JSON.stringify({
             type: 'privateChatRejected',
             by: responder.username
@@ -256,7 +332,6 @@ function handlePrivateMessage(ws, message) {
         timestamp: new Date().toISOString()
     };
 
-    // Store message
     if (!privateChats.has(chatId)) {
         privateChats.set(chatId, []);
     }
@@ -264,14 +339,12 @@ function handlePrivateMessage(ws, message) {
     const chatMessages = privateChats.get(chatId);
     chatMessages.push(privateMessage);
 
-    // Keep only last 100 messages
     if (chatMessages.length > 100) {
         chatMessages.shift();
     }
 
     console.log(`Private message from ${sender.username} in ${chatId}`);
 
-    // Send to both users
     const targetWs = userSocketMap.get(targetUsername);
     
     const messageData = {
@@ -279,10 +352,8 @@ function handlePrivateMessage(ws, message) {
         message: privateMessage
     };
 
-    // Send to sender
     ws.send(JSON.stringify(messageData));
 
-    // Send to recipient if online
     if (targetWs && targetWs.readyState === WebSocket.OPEN) {
         targetWs.send(JSON.stringify(messageData));
     }
@@ -331,7 +402,6 @@ function handleTyping(ws, message) {
     const { channel, isTyping, isPrivate, targetUsername } = message;
     
     if (isPrivate && targetUsername) {
-        // Send typing indicator only to target user
         const targetWs = userSocketMap.get(targetUsername);
         if (targetWs && targetWs.readyState === WebSocket.OPEN) {
             targetWs.send(JSON.stringify({
@@ -343,7 +413,6 @@ function handleTyping(ws, message) {
             }));
         }
     } else {
-        // Broadcast to channel
         broadcast({
             type: 'typing',
             username: user.username,
@@ -365,7 +434,7 @@ function broadcastUserList() {
     });
 }
 
-// Broadcast to all clients (except sender if specified)
+// Broadcast to all clients
 function broadcast(message, excludeWs = null) {
     const data = JSON.stringify(message);
     let sentCount = 0;
