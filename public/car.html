@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8-bit Car Game</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      overflow: hidden;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #road {
+      position: relative;
+      width: 300px;
+      height: 100vh;
+      background-color: grey;
+      overflow: hidden;
+      border: 5px solid black;
+    }
+
+    /* 8-bit style car design */
+    #car {
+      position: absolute;
+      width: 40px;
+      height: 80px;
+      background: url('https://i.ibb.co/c1fqR4R/png-clipart-red-car-pixel-art-pixel-car-racer-pixel-art-8-bit-rectangle-symmetry-removebg-preview.png') no-repeat center center;
+      background-size: cover;
+      bottom: 100px;
+      left: 130px;
+      transform: scaleY(-1) translateY(-80px); /* Flip the main car upside down and adjust position */
+    }
+
+    .lane-divider {
+      position: absolute;
+      width: 2px;
+      height: 200vh;
+      background: repeating-linear-gradient(
+        white 0px,
+        white 20px,
+        transparent 20px,
+        transparent 40px
+      );
+      animation: move-lane 2s linear infinite;
+    }
+
+    /* Positions of lane dividers */
+    .lane-divider:nth-child(1) { left: 60px; }
+    .lane-divider:nth-child(2) { left: 120px; }
+    .lane-divider:nth-child(3) { left: 180px; }
+    .lane-divider:nth-child(4) { left: 240px; }
+
+    .obstacle-car {
+      position: absolute;
+      width: 40px;
+      height: 80px;
+      background: url('https://i.postimg.cc/MZdQf55P/png-clipart-car-pixel-art-pixel-rectangle-symmetry-removebg-preview-1.png') no-repeat center center;
+      background-size: cover;
+      top: -80px;
+      transform: scaleY(-1); /* Flip the image upside down */
+    }
+
+    /* Score display */
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Crash Screen Overlay */
+    #crash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 999;
+    }
+
+    #crash-screen h1 {
+      margin-bottom: 20px;
+      font-size: 48px;
+    }
+
+    #retry-button {
+      padding: 10px 20px;
+      background-color: red;
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Start Screen Overlay */
+    #start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 999;
+    }
+
+    #start-screen h1 {
+      margin-bottom: 20px;
+      font-size: 48px;
+    }
+
+    #start-button {
+      padding: 10px 20px;
+      background-color: green;
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    @keyframes move-lane {
+      0% {
+        top: -100vh;
+      }
+      100% {
+        top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div id="road">
+      <div class="lane-divider"></div>
+      <div class="lane-divider"></div>
+      <div class="lane-divider"></div>
+      <div class="lane-divider"></div>
+      <div id="car"></div>
+    </div>
+    <div id="score">Score: 0</div> <!-- Score display -->
+  </div>
+
+  <!-- Start Screen Overlay -->
+  <div id="start-screen">
+    <h1>8-bit Car Game</h1>
+    <button id="start-button">Start Game</button>
+  </div>
+
+  <!-- Crash Screen Overlay -->
+  <div id="crash-screen">
+    <h1>Crash!</h1>
+    <p>Final Score: <span id="final-score">0</span></p>
+    <button id="retry-button">Retry</button>
+  </div>
+
+  <script>
+    const car = document.getElementById("car");
+    const road = document.getElementById("road");
+    const scoreDisplay = document.getElementById("score");
+    const crashScreen = document.getElementById("crash-screen");
+    const finalScoreDisplay = document.getElementById("final-score");
+    const retryButton = document.getElementById("retry-button");
+    const startScreen = document.getElementById("start-screen");
+    const startButton = document.getElementById("start-button");
+
+    let currentLane = 2; // Start in the middle lane
+    let score = 0;
+    let isGameOver = false;
+    let isGameStarted = false;
+    let obstacleCars = [];
+    const lanes = [10, 70, 130, 190, 250];
+
+    // Start Game
+    function startGame() {
+      isGameStarted = true;
+      startScreen.style.display = "none"; // Hide start screen
+      startIntervals(); // Start generating cars and updating score
+    }
+
+    // Function to start car generation and score updates
+    function startIntervals() {
+      setInterval(createObstacleCar, 400);
+      setInterval(() => {
+        if (!isGameOver) {
+          score += 1;
+          scoreDisplay.innerText = "Score: " + score;
+        }
+      }, 1000);
+    }
+
+    // Retry Game
+    function resetGame() {
+      isGameOver = false;
+      score = 0;
+      scoreDisplay.innerText = "Score: " + score;
+      currentLane = 2;
+      car.style.left = lanes[currentLane] + "px";
+
+      // Remove all obstacle cars from the screen
+      obstacleCars.forEach(car => car.remove());
+      obstacleCars = [];
+
+      crashScreen.style.display = "none";
+    }
+
+    // Game Over Function
+    function gameOver() {
+      isGameOver = true;
+      finalScoreDisplay.innerText = score;
+      crashScreen.style.display = "flex";
+    }
+
+    // Move car left or right
+    function moveCar(event) {
+      if (isGameOver || !isGameStarted) return;
+
+      if (event.key === "ArrowLeft" && currentLane > 0) {
+        currentLane--;
+      } else if (event.key === "ArrowRight" && currentLane < 4) {
+        currentLane++;
+      }
+      car.style.left = lanes[currentLane] + "px";
+    }
+
+    document.addEventListener("keydown", moveCar);
+
+    function createObstacleCar() {
+      if (isGameOver || !isGameStarted) return;
+
+      const obstacleCar = document.createElement("div");
+      obstacleCar.classList.add("obstacle-car");
+      const lane = Math.floor(Math.random() * 5);
+      obstacleCar.style.left = lanes[lane] + "px";
+      road.appendChild(obstacleCar);
+      obstacleCars.push(obstacleCar);
+
+      let moveInterval = setInterval(() => {
+        if (isGameOver) {
+          clearInterval(moveInterval);
+          return;
+        }
+
+        let obstacleCarTop = parseInt(window.getComputedStyle(obstacleCar).getPropertyValue("top"));
+
+        if (obstacleCarTop >= window.innerHeight) {
+          obstacleCar.remove();
+          clearInterval(moveInterval);
+        } else {
+          obstacleCar.style.top = obstacleCarTop + 20 + "px";
+        }
+
+        detectCollision(obstacleCar);
+      }, 30);
+    }
+
+    function detectCollision(obstacleCar) {
+      const carRect = car.getBoundingClientRect();
+      const obstacleRect = obstacleCar.getBoundingClientRect();
+
+      if (
+        carRect.left < obstacleRect.left + obstacleRect.width &&
+        carRect.left + carRect.width > obstacleRect.left &&
+        carRect.top < obstacleRect.top + obstacleRect.height &&
+        carRect.height + carRect.top > obstacleRect.top
+      ) {
+        gameOver();
+      }
+    }
+
+    // Event listeners
+    startButton.addEventListener("click", startGame);
+    retryButton.addEventListener("click", resetGame);
+  </script>
+</body>
+</html>
