@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chet</title>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Hide scrollbars to make the particles background seamless */
+            background-color: #121212;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Ensure particles stay in the background */
+        }
+
+        .content {
+            position: relative;
+            z-index: 1; /* Place the content on top */
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 50px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            width: 180px;
+            height: 180px;
+            margin: 20px;
+            background-color: rgba(30, 30, 30, 0.8); /* Semi-transparent */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: transform 0.3s, background-color 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .box:hover {
+            background-color: rgba(50, 50, 50, 0.9);
+            transform: scale(1.1);
+        }
+
+        .box img {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        #titleimg {
+            width: 60px;
+            height: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="particles-js"></div>
+    <div class="content">
+        <h1>the chet <img id="titleimg" src="https://cdn.glitch.global/10616f98-b5b5-4aa9-86f4-eeb704c198c0/Skull.gif?v=1733362791907"></h1>
+        <div class="container">
+            <div class="box" onclick="navigateTo('index.html')">
+                <img src="https://cdn.glitch.global/10616f98-b5b5-4aa9-86f4-eeb704c198c0/favicon.ico?v=1731866990070" alt="The Chet">
+                The Chet
+            </div>
+            <div class="box" onclick="navigateTo('craft')">
+                <img src="data:image/png;base64,..." alt="Eaglercraft">
+                EaglerCraft
+            </div>
+            <div class="box" onclick="navigateTo('civilization')">
+                <img src="https://cdn.glitch.global/10616f98-b5b5-4aa9-86f4-eeb704c198c0/civilization-builder-game-cover?v=1733269036297" alt="Civilization Builder">
+                Civilization Builder
+            </div>
+            <div class="box" onclick="navigateTo('about-blank')">
+                <img src="https://cdn.glitch.global/10616f98-b5b5-4aa9-86f4-eeb704c198c0/1483687-200.png?v=1733278663426" alt="About:Blank opener">
+                A:B opener
+            </div>
+            <div class="box" onclick="navigateTo('car')">
+                <img src="https://pics.craiyon.com/2023-06-27/71be9ba0154340ea897da2b156223f72.webp" alt="Car Game">
+                8-bit car game
+            </div>
+            <div class="box" onclick="navigateTo('proxy')">
+                <img src="https://icons.veryicon.com/png/o/miscellaneous/base-icon-library-1/internet-54.png" alt="Proxy">
+                Proxy
+            </div>
+            <div class="box" onclick="navigateTo('drift')">
+                <img src="https://raw.githubusercontent.com/proxy-j/homepage/main/drift.png" alt="drift picture">
+                drift
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function navigateTo(page) {
+            location.href = page;
+        }
+
+        // Initialize particles.js
+        particlesJS("particles-js", {
+            particles: {
+                number: {
+                    value: 80,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: "#ffffff"
+                },
+                shape: {
+                    type: "circle",
+                    stroke: {
+                        width: 0,
+                        color: "#000000"
+                    },
+                    polygon: {
+                        nb_sides: 5
+                    }
+                },
+                opacity: {
+                    value: 0.5,
+                    random: false,
+                    anim: {
+                        enable: false,
+                        speed: 1,
+                        opacity_min: 0.1,
+                        sync: false
+                    }
+                },
+                size: {
+                    value: 3,
+                    random: true,
+                    anim: {
+                        enable: false,
+                        speed: 40,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#ffffff",
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 6,
+                    direction: "none",
+                    random: false,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false,
+                    attract: {
+                        enable: false,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: {
+                        enable: true,
+                        mode: "repulse"
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: "push"
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 400,
+                        line_linked: {
+                            opacity: 1
+                        }
+                    },
+                    bubble: {
+                        distance: 400,
+                        size: 40,
+                        duration: 2,
+                        opacity: 8,
+                        speed: 3
+                    },
+                    repulse: {
+                        distance: 200,
+                        duration: 0.4
+                    },
+                    push: {
+                        particles_nb: 4
+                    },
+                    remove: {
+                        particles_nb: 2
+                    }
+                }
+            },
+            retina_detect: true
+        });
+    </script>
+</body>
+
+</html>
