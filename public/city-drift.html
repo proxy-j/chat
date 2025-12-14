@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Performance Drift City</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: sans-serif; }
+        #ui {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            pointer-events: none;
+            text-align: center;
+        }
+        .hud-text {
+            color: white;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+        }
+        #speedometer {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 2rem;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1 class="hud-text">Instanced City Drift</h1>
+        <p class="hud-text">Arrow Keys to Drive • Shift to Boost</p>
+    </div>
+    <div id="speedometer" class="hud-text">0 km/h</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- Configuration ---
+        const CONFIG = {
+            maxSpeed: 2.0,
+            acceleration: 0.04,
+            friction: 0.98,
+            turnSpeed: 0.04,
+            driftFactor: 0.96,
+            citySize: 1000,
+            mapLimit: 2000,
+            blockSize: 80,
+            roadWidth: 26
+        };
+
+        // --- Globals ---
+        let scene, camera, renderer;
+        let car, carModel, carVelocity = new THREE.Vector3();
+        let speed = 0;
+        let inputs = { up: false, down: false, left: false, right: false };
+        let raycaster = new THREE.Raycaster();
+        let groundNormal = new THREE.Vector3(0, 1, 0);
+        
+        // Arrays for collision and terrain
+        let terrainMesh; 
+        let colliders = []; // Simple x/z boxes for buildings
+        let particles = [];
+        let skidMarks = [];
+
+        init();
+        animate();
+
+        function init() {
+            // 1. Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 200, 1500);
+
+            // 2. Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+
+            // 3. Renderer (Optimized settings)
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+            document.body.appendChild(renderer.domElement);
+
+            // 4. Lights
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambient);
+
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(100, 500, 100);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048; // Good quality shadows
+            sun.shadow.mapSize.height = 2048;
+            sun.shadow.camera.near = 0.5;
+            sun.shadow.camera.far = 1500;
+            const d = 600;
+            sun.shadow.camera.left = -d; sun.shadow.camera.right = d;
+            sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
+            scene.add(sun);
+
+            // 5. Build World
+            createTerrainAndCity();
+            createCar();
+
+            // 6. Events
+            window.addEventListener('resize', onResize);
+            document.addEventListener('keydown', (e) => handleKey(e, true));
+            document.addEventListener('keyup', (e) => handleKey(e, false));
+        }
+
+        // --- Optimized City Generation ---
+        function createTerrainAndCity() {
+            // A. The Ground (Unified Mesh for physics)
+            // We create a high-res plane. The center is flat (City), edges are wavy (Hills).
+            const size = CONFIG.mapLimit * 2;
+            const segments = 128; 
+            const geo = new THREE.PlaneGeometry(size, size, segments, segments);
+            geo.rotateX(-Math.PI / 2);
+
+            const pos = geo.attributes.position;
+            const centerSafe = CONFIG.citySize / 2 + 50;
+
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const z = pos.getZ(i);
+                const dist = Math.sqrt(x*x + z*z);
+
+                if (dist > centerSafe) {
+                    // Hill Logic
+                    const h1 = Math.sin(x * 0.008) * Math.cos(z * 0.008) * 30;
+                    const h2 = Math.sin(x * 0.002) * Math.cos(z * 0.003) * 80;
+                    // Blend factor to smooth transition
+                    const alpha = Math.min(1, (dist - centerSafe) / 200);
+                    pos.setY(i, (h1 + h2) * alpha);
+                } else {
+                    pos.setY(i, 0); // Flat city
+                }
+            }
+            geo.computeVertexNormals();
+            
+            // Texture with vertex colors or simple material
+            const groundMat = new THREE.MeshStandardMaterial({ 
+                color: 0x5da130, // Grass Green
+                roughness: 1,
+                flatShading: false
+            });
+            
+            terrainMesh = new THREE.Mesh(geo, groundMat);
+            terrainMesh.receiveShadow = true;
+            scene.add(terrainMesh);
+
+            // B. The Asphalt (City Floor)
+            // Just a flat plane slightly above terrain to look like pavement
+            const cityGeo = new THREE.PlaneGeometry(CONFIG.citySize, CONFIG.citySize);
+            cityGeo.rotateX(-Math.PI / 2);
+            const cityMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.9 });
+            const asphalt = new THREE.Mesh(cityGeo, cityMat);
+            asphalt.position.y = 0.05;
+            asphalt.receiveShadow = true;
+            scene.add(asphalt);
+
+            // C. INSTANCED Buildings & Lines (The Performance Fix)
+            generateCityInstances();
+        }
+
+        function generateCityInstances() {
+            // Count approximate instances needed
+            const half = CONFIG.citySize / 2;
+            const cells = Math.floor(CONFIG.citySize / CONFIG.blockSize);
+            const maxCount = cells * cells;
+
+            // 1. Building Setup
+            const buildGeo = new THREE.BoxGeometry(1, 1, 1); // Unit cube, scaled later
+            buildGeo.translate(0, 0.5, 0); // Pivot at bottom
+            const buildMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4 });
+            const buildings = new THREE.InstancedMesh(buildGeo, buildMat, maxCount);
+            buildings.castShadow = true;
+            buildings.receiveShadow = true;
+
+            // 2. Road Line Setup (Yellow Dashes)
+            const lineGeo = new THREE.PlaneGeometry(2, 8);
+            lineGeo.rotateX(-Math.PI/2);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+            // Max lines: huge number estimate, or just add chunks
+            const roadLines = new THREE.InstancedMesh(lineGeo, lineMat, maxCount * 8); 
+
+            // 3. Sidewalk Setup
+            const swGeo = new THREE.BoxGeometry(1, 0.3, 1);
+            const swMat = new THREE.MeshStandardMaterial({ color: 0x999999 });
+            const sidewalks = new THREE.InstancedMesh(swGeo, swMat, maxCount);
+            sidewalks.receiveShadow = true;
+
+            // --- Generation Loop ---
+            const dummy = new THREE.Object3D();
+            const dummyLine = new THREE.Object3D();
+            let bIdx = 0, lIdx = 0, sIdx = 0;
+
+            const bSize = CONFIG.blockSize;
+            const rWidth = CONFIG.roadWidth;
+            const buildMaxW = bSize - rWidth;
+
+            // Simple Window Texture for buildings
+            buildMat.map = createWindowTexture();
+
+            for (let x = -half + bSize/2; x < half - bSize/2; x += bSize) {
+                for (let z = -half + bSize/2; z < half - bSize/2; z += bSize) {
+                    
+                    const dist = Math.sqrt(x*x + z*z);
+                    if (dist < 80) continue; // Spawn area clear
+
+                    // Determine type
+                    const rand = Math.random();
+
+                    // ROAD LINES
+                    // Vertical lines (if not at very edge)
+                    if (Math.abs(z) < half - bSize) {
+                        dummyLine.rotation.set(0, 0, 0); // Facing Z
+                        dummyLine.position.set(x + bSize/2, 0.08, z);
+                        dummyLine.updateMatrix();
+                        roadLines.setMatrixAt(lIdx++, dummyLine.matrix);
+                    }
+                    // Horizontal lines
+                    if (Math.abs(x) < half - bSize) {
+                        dummyLine.rotation.set(0, Math.PI/2, 0); // Facing X
+                        dummyLine.position.set(x, 0.08, z + bSize/2);
+                        dummyLine.updateMatrix();
+                        roadLines.setMatrixAt(lIdx++, dummyLine.matrix);
+                    }
+
+                    if (rand > 0.8) continue; // Empty lot / Park
+
+                    // BUILDING + SIDEWALK
+                    // Sidewalk
+                    dummy.scale.set(buildMaxW, 1, buildMaxW);
+                    dummy.position.set(x, 0.15, z);
+                    dummy.rotation.set(0,0,0);
+                    dummy.updateMatrix();
+                    sidewalks.setMatrixAt(sIdx++, dummy.matrix);
+
+                    // Building
+                    let h = (dist < 300) ? 30 + Math.random()*80 : 10 + Math.random()*20;
+                    // Random width variance
+                    let w = buildMaxW - 2; 
+
+                    dummy.scale.set(w, h, w);
+                    dummy.position.set(x, 0.3, z); // Sit on sidewalk
+                    dummy.updateMatrix();
+                    buildings.setMatrixAt(bIdx++, dummy.matrix);
+
+                    // Add collision data (abstract representation)
+                    colliders.push({
+                        x: x, z: z, w: w/2 + 2, d: w/2 + 2
+                    });
+                }
+            }
+
+            scene.add(buildings);
+            scene.add(roadLines);
+            scene.add(sidewalks);
+        }
+
+        function createWindowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#444'; ctx.fillRect(0,0,64,64);
+            ctx.fillStyle = '#8cf'; 
+            // Draw a few random windows
+            for(let i=0; i<8; i++){
+                const lx = Math.floor(Math.random()*4)*16 + 4;
+                const ly = Math.floor(Math.random()*4)*16 + 4;
+                ctx.fillRect(lx, ly, 8, 10);
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.magFilter = THREE.NearestFilter;
+            return tex;
+        }
+
+        // --- Car ---
+        function createCar() {
+            car = new THREE.Group();
+            carModel = new THREE.Group();
+            car.add(carModel); // Nest model so we can tilt model without messing up movement logic
+
+            // Neon Style Body
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.2, metalness: 0.6 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0, metalness: 0.8 });
+
+            const chassis = new THREE.Mesh(new THREE.BoxGeometry(2, 0.6, 4.2), bodyMat);
+            chassis.position.y = 0.5;
+            chassis.castShadow = true;
+            carModel.add(chassis);
+
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.5, 2.2), glassMat);
+            cabin.position.set(0, 1.0, -0.2);
+            cabin.castShadow = true;
+            carModel.add(cabin);
+
+            // Wheels
+            const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 12);
+            wheelGeo.rotateZ(Math.PI/2);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222 });
+            const wheels = [
+                [-1, 0.4, 1.2], [1, 0.4, 1.2], [-1, 0.4, -1.2], [1, 0.4, -1.2]
+            ];
+            wheels.forEach(pos => {
+                const w = new THREE.Mesh(wheelGeo, wheelMat);
+                w.position.set(...pos);
+                w.castShadow = true;
+                carModel.add(w);
+            });
+
+            // Headlights
+            const hl = new THREE.SpotLight(0xffffff, 10, 60, 0.6, 0.5);
+            hl.position.set(0, 1, -1.5);
+            hl.target.position.set(0, 0, -20);
+            carModel.add(hl);
+            carModel.add(hl.target);
+
+            scene.add(car);
+        }
+
+        function handleKey(e, pressed) {
+            if(e.key === 'ArrowUp') inputs.up = pressed;
+            if(e.key === 'ArrowDown') inputs.down = pressed;
+            if(e.key === 'ArrowLeft') inputs.left = pressed;
+            if(e.key === 'ArrowRight') inputs.right = pressed;
+        }
+
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Physics & Animation ---
+
+        function checkBuildingCollision(nextPos) {
+            // Only check collision if we are inside the city bounds
+            const halfCity = CONFIG.citySize/2;
+            if (Math.abs(nextPos.x) > halfCity || Math.abs(nextPos.z) > halfCity) return false;
+
+            // Brute force check against building list (fast enough for 200 items in JS)
+            for(let b of colliders) {
+                if (nextPos.x > b.x - b.w && nextPos.x < b.x + b.w &&
+                    nextPos.z > b.z - b.d && nextPos.z < b.z + b.d) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 1. Inputs & Velocity
+            if (inputs.up) speed += CONFIG.acceleration;
+            if (inputs.down) speed -= CONFIG.acceleration;
+            speed *= CONFIG.friction;
+            if (Math.abs(speed) < 0.001) speed = 0;
+
+            // 2. Turning
+            if (Math.abs(speed) > 0.05) {
+                const dir = inputs.left ? 1 : (inputs.right ? -1 : 0);
+                // Rotate the entire car GROUP on Y axis
+                car.rotation.y += dir * CONFIG.turnSpeed * Math.sign(speed);
+            }
+
+            // 3. Movement Physics (World Space)
+            // Convert local forward to world vector
+            const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0,1,0), car.rotation.y);
+            
+            // Drift Logic: Interpolate actual velocity towards desired direction
+            const desiredVelocity = forward.multiplyScalar(speed);
+            carVelocity.lerp(desiredVelocity, 1 - CONFIG.driftFactor);
+
+            const nextPos = car.position.clone().add(carVelocity);
+
+            // 4. Terrain Following (Raycasting)
+            // Cast ray from high up down to the terrain
+            const rayOrigin = nextPos.clone();
+            rayOrigin.y = 500; 
+            raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+            
+            const intersects = raycaster.intersectObject(terrainMesh);
+            
+            let groundY = 0;
+            if (intersects.length > 0) {
+                const hit = intersects[0];
+                groundY = hit.point.y;
+                groundNormal.copy(hit.face.normal).applyQuaternion(terrainMesh.quaternion); // Transform normal to world space
+            }
+
+            // 5. Apply Position
+            if (checkBuildingCollision(nextPos)) {
+                speed *= -0.5; // Crash bounce
+                carVelocity.multiplyScalar(-0.5);
+            } else {
+                car.position.x = nextPos.x;
+                car.position.z = nextPos.z;
+                car.position.y = groundY + 0.5; // Offset for wheels
+            }
+
+            // 6. Apply Slope Rotation (Pitch/Roll)
+            // We align the carModel's up vector to the ground normal
+            const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), groundNormal);
+            // Smoothly rotate the car model to match slope
+            carModel.quaternion.slerp(targetQuaternion, 0.2);
+
+            // 7. Visual Body Roll (Drift lean)
+            // Add extra roll to the carModel based on turning
+            const lean = (inputs.left ? 1 : (inputs.right ? -1 : 0)) * (speed * 0.2);
+            carModel.rotation.z = -lean; // Simple local roll
+
+            // 8. Camera
+            updateCamera();
+
+            // 9. Effects
+            updateEffects();
+            document.getElementById('speedometer').innerText = Math.round(speed * 100) + " km/h";
+            renderer.render(scene, camera);
+        }
+
+        function updateCamera() {
+            // Camera follows car but smooths out height changes
+            const offset = new THREE.Vector3(0, 8, -15); // Behind and up
+            offset.applyAxisAngle(new THREE.Vector3(0,1,0), car.rotation.y); // Rotate offset by car heading
+            
+            const targetPos = car.position.clone().add(offset);
+            
+            camera.position.lerp(targetPos, 0.1);
+            camera.lookAt(car.position.clone().add(new THREE.Vector3(0, 2, 0)));
+        }
+
+        function updateEffects() {
+            // Drift Smoke
+            const isTurning = inputs.left || inputs.right;
+            if (isTurning && Math.abs(speed) > 0.5 && Math.random() > 0.5) {
+                const p = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.4, 0.4, 0.4),
+                    new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.5 })
+                );
+                // Position at rear wheels relative to car rotation
+                const angle = car.rotation.y;
+                const rx = Math.sin(angle);
+                const rz = Math.cos(angle);
+                
+                // Offset behind car
+                p.position.set(
+                    car.position.x - rx * 1.5 + (Math.random()-0.5), 
+                    car.position.y, 
+                    car.position.z - rz * 1.5 + (Math.random()-0.5)
+                );
+                
+                scene.add(p);
+                particles.push({ mesh: p, life: 1.0 });
+            }
+
+            // Particle Logic
+            for(let i=particles.length-1; i>=0; i--) {
+                let p = particles[i];
+                p.life -= 0.03;
+                p.mesh.position.y += 0.05;
+                p.mesh.rotation.x += 0.1;
+                p.mesh.scale.multiplyScalar(1.05);
+                p.mesh.material.opacity = p.life * 0.5;
+                if(p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i,1);
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>
