@@ -1,150 +1,793 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Chet</title>
-    <link rel="icon" type="image/png" id="favicon">
-    <style>
-        * {margin: 0;padding: 0;box-sizing: border-box;}
-        body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;height: 100vh;overflow: hidden;background: #36393f;}
-        .container {display: flex;height: 100vh;}
-        .sidebar {width: 240px;background: #2f3136;display: flex;flex-direction: column;}
-        .server-header {height: 48px;padding: 0 16px;display: flex;align-items: center;border-bottom: 1px solid #202225;color: #fff;font-weight: 600;font-size: 15px;}
-        .channels {flex: 1;overflow-y: auto;padding: 8px;}
-        .channel-section {margin-bottom: 16px;}
-        .section-header {color: #96989d;font-size: 12px;font-weight: 600;text-transform: uppercase;margin-bottom: 4px;padding: 0 8px;}
-        .channel {padding: 8px 12px;margin: 2px 0;border-radius: 4px;color: #96989d;cursor: pointer;display: flex;align-items: center;justify-content: space-between;font-size: 14px;transition: all 0.15s;position: relative;}
-        .channel:hover {background: #3a3c42;color: #dcddde;}
-        .channel.active {background: #404249;color: #fff;}
-        .channel-name {display: flex;align-items: center;flex: 1;}
-        .channel-name::before {content: '#';margin-right: 6px;font-weight: 600;color: #72767d;}
-        .channel.private .channel-name::before {content: '👤';margin-right: 6px;}
-        .channel-right {display: flex;align-items: center;gap: 4px;}
-        .unread-badge {background: #ed4245;color: #fff;border-radius: 10px;padding: 2px 6px;font-size: 11px;font-weight: 600;min-width: 18px;text-align: center;}
-        .close-dm {opacity: 0;background: transparent;border: none;color: #96989d;cursor: pointer;padding: 2px 6px;border-radius: 3px;font-size: 16px;transition: all 0.15s;}
-        .channel:hover .close-dm {opacity: 1;}
-        .close-dm:hover {background: #ed4245;color: #fff;}
-        .online-users {padding: 8px;border-top: 1px solid #202225;max-height: 200px;overflow-y: auto;}
-        .online-header {color: #96989d;font-size: 12px;font-weight: 600;text-transform: uppercase;margin-bottom: 8px;}
-        .user-list-item {padding: 4px 8px;color: #96989d;font-size: 14px;display: flex;align-items: center;justify-content: space-between;border-radius: 4px;transition: background 0.15s;}
-        .user-list-item:hover {background: #3a3c42;}
-        .user-name {display: flex;align-items: center;}
-        .user-name::before {content: '●';color: #3ba55d;margin-right: 6px;}
-        .dm-btn {opacity: 0;background: #5865f2;color: #fff;border: none;padding: 2px 8px;border-radius: 3px;font-size: 11px;cursor: pointer;transition: all 0.15s;}
-        .user-list-item:hover .dm-btn {opacity: 1;}
-        .dm-btn:hover {background: #4752c4;}
-        .user-area {height: 52px;background: #292b2f;padding: 0 8px;display: flex;align-items: center;border-top: 1px solid #202225;}
-        .user-info {display: flex;align-items: center;flex: 1;}
-        .user-avatar {width: 32px;height: 32px;border-radius: 50%;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);display: flex;align-items: center;justify-content: center;color: #fff;font-weight: 600;margin-right: 8px;}
-        .username {color: #fff;font-size: 14px;font-weight: 500;}
-        .connection-status {width: 8px;height: 8px;border-radius: 50%;background: #ed4245;margin-left: 8px;}
-        .connection-status.connected {background: #3ba55d;}
-        .main-content {flex: 1;display: flex;flex-direction: column;background: #36393f;}
-        .chat-header {height: 48px;padding: 0 16px;display: flex;align-items: center;justify-content: space-between;border-bottom: 1px solid #202225;color: #fff;}
-        .channel-name-header {font-weight: 600;font-size: 16px;}
-        .channel-name-header::before {content: '#';margin-right: 4px;color: #72767d;}
-        .channel-name-header.private::before {content: '👤';}
-        .typing-indicator {font-size: 12px;color: #72767d;font-style: italic;}
-        .messages {flex: 1;overflow-y: auto;padding: 16px;}
-        .message {display: flex;padding: 4px 0;margin-bottom: 12px;}
-        .message:hover {background: #32353b;margin: 0 -16px 12px;padding: 4px 16px;}
-        .message-avatar {width: 40px;height: 40px;border-radius: 50%;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);display: flex;align-items: center;justify-content: center;color: #fff;font-weight: 600;margin-right: 16px;flex-shrink: 0;}
-        .message-content {flex: 1;}
-        .message-header {display: flex;align-items: baseline;margin-bottom: 4px;}
-        .message-author {color: #fff;font-weight: 500;font-size: 15px;margin-right: 8px;}
-        .message-timestamp {color: #72767d;font-size: 12px;}
-        .message-text {color: #dcddde;font-size: 15px;line-height: 1.4;word-wrap: break-word;}
-        .message-image {margin-top: 8px;max-width: 400px;max-height: 300px;border-radius: 8px;cursor: pointer;transition: transform 0.2s;display: block;}
-        .message-image:hover {transform: scale(1.02);}
-        .input-area {padding: 16px;}
-        .input-wrapper {background: #40444b;border-radius: 8px;padding: 12px;display: flex;align-items: center;}
-        .attach-btn {background: transparent;border: none;color: #b9bbbe;cursor: pointer;font-size: 20px;padding: 4px 8px;margin-right: 8px;transition: color 0.2s;}
-        .attach-btn:hover {color: #dcddde;}
-        .message-input {flex: 1;background: none;border: none;color: #dcddde;font-size: 15px;outline: none;}
-        .message-input::placeholder {color: #72767d;}
-        .send-btn {background: #5865f2;color: #fff;border: none;padding: 8px 16px;border-radius: 4px;cursor: pointer;font-weight: 500;margin-left: 8px;transition: background 0.2s;}
-        .send-btn:hover {background: #4752c4;}
-        .send-btn:active {background: #3c45a5;}
-        .send-btn:disabled {background: #4e5058;cursor: not-allowed;}
-        .file-input {display: none;}
-        .image-preview {position: relative;display: inline-block;margin-right: 8px;}
-        .preview-image {max-width: 100px;max-height: 100px;border-radius: 4px;}
-        .remove-preview {position: absolute;top: -8px;right: -8px;background: #ed4245;color: #fff;border: none;border-radius: 50%;width: 20px;height: 20px;cursor: pointer;font-size: 12px;display: flex;align-items: center;justify-content: center;}
-        .notifications {position: fixed;top: 16px;right: 16px;z-index: 1000;display: flex;flex-direction: column;gap: 12px;max-width: 400px;}
-        .notification {background: #2f3136;border: 1px solid #202225;border-radius: 8px;padding: 16px;box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);animation: slideIn 0.3s ease;}
-        @keyframes slideIn {from {transform: translateX(400px);opacity: 0;}to {transform: translateX(0);opacity: 1;}}
-        .notification-header {color: #fff;font-weight: 600;font-size: 14px;margin-bottom: 8px;}
-        .notification-body {color: #dcddde;font-size: 14px;margin-bottom: 12px;}
-        .notification-actions {display: flex;gap: 8px;}
-        .notification-btn {flex: 1;padding: 8px;border: none;border-radius: 4px;font-weight: 500;cursor: pointer;transition: all 0.2s;}
-        .btn-accept {background: #3ba55d;color: #fff;}
-        .btn-accept:hover {background: #2d7d46;}
-        .btn-decline {background: #ed4245;color: #fff;}
-        .btn-decline:hover {background: #c03537;}
-        .image-modal {display: none;position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: rgba(0, 0, 0, 0.9);z-index: 2000;justify-content: center;align-items: center;}
-        .image-modal.active {display: flex;}
-        .modal-image {max-width: 90%;max-height: 90%;border-radius: 8px;}
-        .close-modal {position: absolute;top: 20px;right: 20px;background: #ed4245;color: #fff;border: none;border-radius: 50%;width: 40px;height: 40px;font-size: 24px;cursor: pointer;}
-        ::-webkit-scrollbar {width: 8px;}
-        ::-webkit-scrollbar-track {background: #2f3136;}
-        ::-webkit-scrollbar-thumb {background: #202225;border-radius: 4px;}
-        ::-webkit-scrollbar-thumb:hover {background: #1a1c1f;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Chet</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text></svg>" id="favicon">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;height:100vh;overflow:hidden;background:#36393f}
+.container{display:flex;height:100vh}
+.sidebar{width:240px;background:#2f3136;display:flex;flex-direction:column}
+.sidebar.right{order:3;border-left:1px solid #202225;transition:transform .3s}
+.sidebar.right.collapsed{transform:translateX(240px)}
+.right-toggle{position:absolute;left:-36px;top:50%;transform:translateY(-50%);background:#2f3136;border:1px solid #202225;border-right:none;padding:8px;border-radius:4px 0 0 4px;cursor:pointer;color:#96989d;transition:color .2s}
+.right-toggle:hover{color:#fff}
+.server-header{height:48px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #202225;color:#fff;font-weight:600;font-size:15px}
+.channels{flex:1;overflow-y:auto;padding:8px}
+.channel-section{margin-bottom:16px}
+.section-header{color:#96989d;font-size:12px;font-weight:600;text-transform:uppercase;margin-bottom:4px;padding:0 8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.channel{padding:8px 12px;margin:2px 0;border-radius:4px;color:#96989d;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:14px;transition:all .15s;position:relative}
+.channel:hover{background:#3a3c42;color:#dcddde}
+.channel.active{background:#404249;color:#fff}
+.channel.has-unread{font-weight:600}
+.channel-name{display:flex;align-items:center}
+.channel-name::before{content:'#';margin-right:6px;font-weight:600;color:#72767d}
+.channel.private .channel-name::before{content:'@';color:#5865f2}
+.unread-badge{background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;display:none}
+.channel.has-unread .unread-badge{display:block}
+.dm-badge{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}
+.close-dm{opacity:0;background:none;border:none;color:#96989d;cursor:pointer;font-size:16px;transition:opacity .2s}
+.channel:hover .close-dm{opacity:1}
+.close-dm:hover{color:#ed4245}
+.users-section{flex:1;overflow-y:auto;padding:8px}
+.users-section-header{padding:8px 12px;color:#96989d;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.online-count{color:#3ba55d;font-size:11px}
+.role-header{font-size:11px;font-weight:600;text-transform:uppercase;padding:8px 12px 4px}
+.owner-header{color:#e74c3c}
+.admin-header{color:#faa61a}
+.vip-header{color:#f47fff}
+.guest-header{color:#96989d}
+.user-item{padding:6px 12px;color:#dcddde;font-size:13px;display:flex;align-items:center;justify-content:space-between;border-radius:4px;margin:0 4px;transition:background .15s;cursor:pointer}
+.user-item:hover{background:#3a3c42}
+.user-name{display:flex;align-items:center;gap:6px}
+.user-name::before{content:'●';color:#3ba55d;font-size:8px}
+.role-badge{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;color:#fff;margin-left:4px}
+.role-badge.owner{background:linear-gradient(135deg,#e74c3c,#c0392b)}
+.role-badge.admin{background:linear-gradient(135deg,#faa61a,#ff8c00)}
+.role-badge.vip{background:linear-gradient(135deg,#f47fff,#ff6ec7)}
+.dm-btn{opacity:0;background:#5865f2;color:#fff;border:none;padding:3px 8px;border-radius:3px;font-size:10px;cursor:pointer;transition:opacity .2s}
+.user-item:hover .dm-btn{opacity:1}
+.user-area{height:52px;background:#292b2f;padding:0 8px;display:flex;align-items:center;cursor:pointer;transition:background .2s;position:relative}
+.user-area:hover{background:#2a2d31}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:8px;font-size:14px;position:relative}
+.notif-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#ed4245;border:2px solid #292b2f;border-radius:50%;animation:pulse 2s infinite;display:none}
+.notif-dot.show{display:block}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.avatar-badge{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:7px;border:2px solid #292b2f;color:#fff}
+.avatar-badge.show{display:flex}
+.avatar-badge.owner{background:#e74c3c}
+.avatar-badge.admin{background:#faa61a}
+.avatar-badge.vip{background:#f47fff}
+.user-display-name{color:#fff;font-size:14px;font-weight:500}
+.conn-status{width:8px;height:8px;border-radius:50%;background:#ed4245;margin-left:auto;transition:background .3s}
+.conn-status.online{background:#3ba55d}
+.main-content{flex:1;display:flex;flex-direction:column;background:#36393f}
+.chat-header{height:48px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #202225;color:#fff}
+.current-channel{font-weight:600;font-size:16px}
+.current-channel::before{content:'#';margin-right:4px;color:#72767d}
+.current-channel.private::before{content:'@';color:#5865f2}
+.messages{flex:1;overflow-y:auto;padding:16px}
+.message{display:flex;padding:4px 0;margin-bottom:8px;position:relative;transition:background .15s}
+.message:hover{background:rgba(0,0,0,.1);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;border-radius:4px}
+.msg-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:16px;flex-shrink:0}
+.msg-content{flex:1;min-width:0}
+.msg-header{display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap}
+.msg-author{font-weight:500;font-size:15px}
+.msg-author.owner{color:#e74c3c}
+.msg-author.admin{color:#faa61a}
+.msg-author.vip{color:#f47fff}
+.msg-author.normal{color:#fff}
+.msg-time{color:#72767d;font-size:12px}
+.msg-text{color:#dcddde;font-size:15px;line-height:1.4;word-wrap:break-word;white-space:pre-wrap}
+.msg-reply{background:#2f3136;border-left:3px solid #5865f2;padding:4px 8px;margin-bottom:4px;border-radius:0 4px 4px 0;font-size:13px;color:#96989d}
+.msg-reply-author{color:#5865f2;font-weight:500}
+.msg-actions{position:absolute;right:8px;top:-8px;background:#2f3136;border-radius:4px;display:none;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.message:hover .msg-actions{display:flex}
+.msg-action{background:none;border:none;color:#96989d;padding:6px 8px;cursor:pointer;font-size:14px;transition:all .15s}
+.msg-action:hover{color:#fff;background:#3a3c42}
+.reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.reaction{background:#3a3c42;border:1px solid transparent;border-radius:6px;padding:2px 6px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
+.reaction:hover{border-color:#5865f2;transform:scale(1.05)}
+.reaction.active{background:rgba(88,101,242,.3);border-color:#5865f2}
+.reaction-count{font-size:12px;color:#dcddde}
+.emoji-picker{position:absolute;bottom:100%;right:0;background:#2f3136;border-radius:8px;padding:8px;display:none;box-shadow:0 4px 12px rgba(0,0,0,.5);z-index:100;animation:fadeIn .2s}
+.emoji-picker.show{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.emoji-picker button{background:none;border:none;font-size:20px;cursor:pointer;padding:4px;border-radius:4px;transition:all .15s}
+.emoji-picker button:hover{background:#3a3c42;transform:scale(1.2)}
+.input-area{padding:0 16px 16px}
+.typing-indicator{height:24px;font-size:12px;color:#72767d;font-style:italic;display:flex;align-items:center}
+.reply-bar{background:#40444b;border-radius:8px 8px 0 0;padding:8px 12px;display:none;align-items:center;justify-content:space-between}
+.reply-bar.show{display:flex}
+.reply-bar-text{color:#dcddde;font-size:13px}
+.reply-bar-close{background:none;border:none;color:#96989d;cursor:pointer;font-size:18px;transition:color .2s}
+.reply-bar-close:hover{color:#fff}
+.input-wrapper{background:#40444b;border-radius:8px;padding:12px;display:flex;align-items:center}
+.reply-bar.show+.input-wrapper{border-radius:0 0 8px 8px}
+.msg-input{flex:1;background:none;border:none;color:#dcddde;font-size:15px;outline:none}
+.msg-input::placeholder{color:#72767d}
+.send-btn{background:#5865f2;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:500;margin-left:8px;transition:background .2s}
+.send-btn:hover{background:#4752c4}
+.send-btn:disabled{background:#4e5058;cursor:not-allowed}
+.notifs{position:fixed;top:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;max-width:380px;pointer-events:none}
+.notifs>*{pointer-events:all}
+.notif{background:#2f3136;border:1px solid #202225;border-radius:8px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.4);animation:slideIn .3s}
+@keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.notif-title{color:#fff;font-weight:600;font-size:14px;margin-bottom:6px}
+.notif-body{color:#dcddde;font-size:13px;margin-bottom:8px}
+.notif-actions{display:flex;gap:8px}
+.notif-btn{flex:1;padding:8px;border:none;border-radius:4px;font-weight:500;cursor:pointer;font-size:13px;transition:all .2s}
+.notif-accept{background:#3ba55d;color:#fff}
+.notif-accept:hover{background:#2d8659}
+.notif-decline{background:#ed4245;color:#fff}
+.notif-decline:hover{background:#c93b3e}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:#2f3136}
+::-webkit-scrollbar-thumb{background:#202225;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#1a1c1f}
+#loginOverlay{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#1a1c20 0%,#2f3136 50%,#1a1c20 100%);display:flex;align-items:center;justify-content:center;flex-direction:column}
+.login-title{font-family:'Great Vibes',cursive;font-size:72px;color:#fff;margin-bottom:30px;text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3);animation:glow 2s ease-in-out infinite}
+@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3)}50%{text-shadow:0 0 30px rgba(88,101,242,.7),0 0 60px rgba(88,101,242,.5)}}
+#loginCard{width:320px;background:#2f3136;border:1px solid #202225;border-radius:8px;padding:24px;color:#fff;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#loginCard h2{margin-bottom:16px;font-size:20px}
+#pwdInput{width:100%;padding:12px;border-radius:6px;border:none;background:#40444b;color:#fff;font-size:14px;transition:box-shadow .2s}
+#pwdInput:focus{outline:none;box-shadow:0 0 0 2px #5865f2}
+#loginBtn{width:100%;margin-top:12px;padding:12px;border:none;border-radius:6px;background:#5865f2;color:#fff;cursor:pointer;font-weight:600;font-size:14px;transition:background .2s}
+#loginBtn:hover{background:#4752c4}
+.guest-login{margin-top:16px;color:#5865f2;font-size:13px;cursor:pointer;transition:all .2s;text-decoration:underline;text-underline-offset:2px}
+.guest-login:hover{color:#7289da;transform:translateY(-1px)}
+#loginError{margin-top:10px;color:#ed4245;font-size:13px;min-height:20px}
+.empty{text-align:center;color:#72767d;padding:12px;font-size:12px}
+.modal-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{width:520px;max-height:80vh;background:#2f3136;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.modal-header{padding:16px;background:#5865f2;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-body{padding:16px;overflow-y:auto;flex:1}
+.section{margin-bottom:16px}
+.section-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px}
+.help-command{background:#40444b;padding:10px;border-radius:6px;margin-bottom:8px;border-left:3px solid #5865f2}
+.help-command-name{color:#5865f2;font-weight:600;font-size:14px;margin-bottom:4px}
+.help-command-desc{color:#dcddde;font-size:12px}
+.form-group{margin-bottom:12px}
+.form-label{color:#96989d;font-size:11px;font-weight:600;margin-bottom:4px;display:block}
+.form-input,.form-select{width:100%;padding:10px;background:#40444b;border:1px solid #202225;border-radius:4px;color:#fff;font-size:13px;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:#5865f2;outline:none}
+.btn{width:100%;padding:10px;border:none;border-radius:4px;font-weight:600;cursor:pointer;font-size:13px;margin-top:8px;transition:all .2s}
+.btn-primary{background:#5865f2;color:#fff}
+.btn-primary:hover{background:#4752c4}
+.btn-success{background:#3ba55d;color:#fff}
+.btn-success:hover{background:#2d8659}
+.btn-danger{background:#ed4245;color:#fff}
+.btn-danger:hover{background:#c93b3e}
+#adminPanel{position:fixed;bottom:60px;left:8px;width:500px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+#adminPanel.show{display:flex}
+.ap-header{padding:12px 16px;border-bottom:1px solid #202225;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.ap-title{color:#fff;font-weight:600;font-size:14px}
+.ap-close{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;transition:color .2s}
+.ap-close:hover{color:#fff}
+.ap-tabs{display:flex;padding:8px;gap:6px;border-bottom:1px solid #202225;flex-wrap:wrap;flex-shrink:0;background:#26282d}
+.ap-tab{padding:8px 12px;background:none;border:none;color:#96989d;cursor:pointer;border-radius:4px;font-size:11px;font-weight:600;transition:all .15s}
+.ap-tab:hover{background:#3a3c42;color:#dcddde}
+.ap-tab.active{background:#5865f2;color:#fff}
+.ap-content{flex:1;overflow-y:auto;padding:12px;min-height:0}
+.ap-section{display:none}
+.ap-section.active{display:block}
+.ap-user{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#40444b;border-radius:6px;margin-bottom:6px;transition:background .15s}
+.ap-user:hover{background:#474b52}
+.ap-user-info{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.ap-user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0}
+.ap-user-name{color:#fff;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-user-actions{display:flex;gap:4px;flex-shrink:0}
+.ap-btn{padding:5px 9px;border:none;border-radius:3px;cursor:pointer;font-size:10px;font-weight:600;color:#fff;transition:opacity .2s}
+.ap-btn:hover{opacity:.8}
+.ap-btn-kick{background:#faa61a}
+.ap-btn-to{background:#f47b67}
+.ap-btn-mute{background:#9b59b6}
+.ap-btn-ban{background:#ed4245}
+.troll-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.troll-btn{padding:8px 5px;border:none;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600;color:#fff;background:#5865f2;transition:all .2s}
+.troll-btn:hover{opacity:.9;transform:scale(1.02)}
+.troll-btn.warn{background:#faa61a}
+.troll-btn.danger{background:#ed4245}
+.troll-btn.success{background:#3ba55d}
+.owner-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #202225}
+.owner-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.ban-list{max-height:120px;overflow-y:auto;background:#40444b;border-radius:4px;padding:8px;margin-bottom:8px}
+.ban-item{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#2f3136;border-radius:3px;margin-bottom:4px;font-size:11px;color:#dcddde}
+.unban-btn{background:#3ba55d;color:#fff;border:none;padding:4px 8px;border-radius:3px;font-size:9px;cursor:pointer;transition:background .2s;font-weight:600}
+.unban-btn:hover{background:#2d8659}
+.ban-type-selector{display:flex;gap:6px;margin-top:8px}
+.ban-type-btn{flex:1;padding:6px;background:#40444b;border:2px solid transparent;border-radius:4px;color:#fff;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;text-align:center}
+.ban-type-btn:hover{border-color:#5865f2}
+.ban-type-btn.selected{border-color:#3ba55d;background:rgba(59,165,93,.2)}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+@keyframes rainbow{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+.confetti{position:fixed;width:10px;height:10px;pointer-events:none;z-index:9999;animation:fall 3s linear forwards}
+@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+</style>
 </head>
 <body>
-    <div class="notifications" id="notifications"></div>
-    <div class="image-modal" id="imageModal">
-        <button class="close-modal" id="closeModalBtn">×</button>
-        <img class="modal-image" id="modalImage" src="" alt="Full size image">
-    </div>
-    <div class="container">
-        <div class="sidebar">
-            <div class="server-header">The Chet</div>
-            <div class="channels" id="channelList">
-                <div class="channel-section">
-                    <div class="section-header">Channels</div>
-                    <div class="channel active" data-channel="general"><span class="channel-name">general</span><div class="channel-right"></div></div>
-                    <div class="channel" data-channel="random"><span class="channel-name">random</span><div class="channel-right"></div></div>
-                    <div class="channel" data-channel="gaming"><span class="channel-name">gaming</span><div class="channel-right"></div></div>
-                    <div class="channel" data-channel="memes"><span class="channel-name">memes</span><div class="channel-right"></div></div>
-                </div>
-                <div class="channel-section">
-                    <div class="section-header">Direct Messages</div>
-                    <div id="dmList"></div>
-                </div>
-            </div>
-            <div class="online-users">
-                <div class="online-header">Online Users</div>
-                <div id="userList"></div>
-            </div>
-            <div class="user-area">
-                <div class="user-info">
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <div class="username" id="usernameDisplay">User</div>
-                    <div class="connection-status" id="connectionStatus"></div>
-                </div>
-            </div>
-        </div>
-        <div class="main-content">
-            <div class="chat-header">
-                <div class="channel-name-header" id="currentChannel">general</div>
-                <div class="typing-indicator" id="typingIndicator"></div>
-            </div>
-            <div class="messages" id="messageArea"></div>
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <input type="file" class="file-input" id="fileInput" accept="image/*">
-                    <button class="attach-btn" id="attachBtn">📎</button>
-                    <div id="imagePreviewContainer"></div>
-                    <input type="text" class="message-input" id="messageInput" placeholder="Message #general" maxlength="150">
-                    <button class="send-btn" id="sendBtn">Send</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
-const WS_URL=window.location.protocol==='https:'?`wss://${window.location.host}`:`ws://${window.location.hostname}:${window.location.port||3000}`;const state={currentChannel:'general',currentChatType:'channel',currentPrivateChat:null,username:'',ws:null,connected:false,messages:{},privateMessages:{},users:[],typingUsers:{},privateChats:{},selectedImage:null,unreadCounts:{},isTabActive:true,totalUnread:0,originalFavicon:null};const messageArea=document.getElementById('messageArea'),messageInput=document.getElementById('messageInput'),sendBtn=document.getElementById('sendBtn'),channelList=document.getElementById('channelList'),dmList=document.getElementById('dmList'),currentChannelEl=document.getElementById('currentChannel'),usernameDisplay=document.getElementById('usernameDisplay'),userAvatar=document.getElementById('userAvatar'),connectionStatus=document.getElementById('connectionStatus'),userList=document.getElementById('userList'),typingIndicator=document.getElementById('typingIndicator'),notifications=document.getElementById('notifications'),fileInput=document.getElementById('fileInput'),attachBtn=document.getElementById('attachBtn'),imagePreviewContainer=document.getElementById('imagePreviewContainer'),imageModal=document.getElementById('imageModal'),modalImage=document.getElementById('modalImage'),closeModalBtn=document.getElementById('closeModalBtn'),favicon=document.getElementById('favicon');let typingTimeout;function createDefaultFavicon(){const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;const ctx=canvas.getContext('2d');ctx.fillStyle='#5865f2';ctx.fillRect(0,0,32,32);ctx.fillStyle='#fff';ctx.font='bold 20px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('C',16,16);return canvas.toDataURL()}function updateFavicon(hasNotification){const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;const ctx=canvas.getContext('2d');const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,32,32);if(hasNotification){ctx.fillStyle='#ed4245';ctx.beginPath();ctx.arc(24,8,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}favicon.href=canvas.toDataURL()};img.src=state.originalFavicon||createDefaultFavicon()}function updateTitle(){if(state.totalUnread>0){document.title=`(${state.totalUnread}) The Chet`}else{document.title='The Chet'}}function incrementUnread(channelId){if(!state.isTabActive||(state.currentChatType==='channel'&&state.currentChannel!==channelId)||(state.currentChatType==='private'&&state.currentPrivateChat!==channelId)){if(!state.unreadCounts[channelId])state.unreadCounts[channelId]=0;state.unreadCounts[channelId]++;state.totalUnread++;updateTitle();updateFavicon(true);updateChannelBadges()}}function clearUnread(channelId){if(state.unreadCounts[channelId]){state.totalUnread-=state.unreadCounts[channelId];state.unreadCounts[channelId]=0;updateTitle();updateFavicon(state.totalUnread>0);updateChannelBadges()}}function updateChannelBadges(){document.querySelectorAll('.channel').forEach(ch=>{const rightDiv=ch.querySelector('.channel-right');if(!rightDiv)return;rightDiv.querySelectorAll('.unread-badge').forEach(b=>b.remove());const channelId=ch.dataset.channel||ch.dataset.chatId;if(state.unreadCounts[channelId]&&state.unreadCounts[channelId]>0){const badge=document.createElement('span');badge.className='unread-badge';badge.textContent=state.unreadCounts[channelId];rightDiv.insertBefore(badge,rightDiv.firstChild)}})}document.addEventListener('visibilitychange',()=>{state.isTabActive=!document.hidden;if(state.isTabActive){const currentId=state.currentChatType==='channel'?state.currentChannel:state.currentPrivateChat;clearUnread(currentId)}});function init(){state.originalFavicon=createDefaultFavicon();favicon.href=state.originalFavicon;const n=prompt('Enter your username:','User')||'User';state.username=n;usernameDisplay.textContent=n;userAvatar.textContent=n.charAt(0).toUpperCase();connectWebSocket()}function connectWebSocket(){try{state.ws=new WebSocket(WS_URL)}catch(e){setTimeout(connectWebSocket,3000);return}state.ws.onopen=()=>{state.connected=true;connectionStatus.classList.add('connected');sendBtn.disabled=false;send({type:'join',username:state.username});send({type:'getHistory',channel:state.currentChannel})};state.ws.onmessage=e=>{try{handleServerMessage(JSON.parse(e.data))}catch(er){}};state.ws.onclose=()=>{state.connected=false;connectionStatus.classList.remove('connected');sendBtn.disabled=true;setTimeout(connectWebSocket,3000)};state.ws.onerror=e=>{}}function handleServerMessage(d){switch(d.type){case'message':addMessageToChannel(d.message);break;case'history':loadHistory(d.channel,d.messages);break;case'userList':updateUserList(d.users);break;case'typing':handleTypingIndicator(d);break;case'privateChatRequest':showPrivateChatRequest(d.from);break;case'privateChatAccepted':handlePrivateChatAccepted(d.chatId,d.with);break;case'privateChatRejected':alert(`${d.by} declined`);break;case'privateMessage':addPrivateMessage(d.message);break;case'privateHistory':loadPrivateHistory(d.chatId,d.messages);break}}function send(d){if(state.ws&&state.ws.readyState===WebSocket.OPEN)state.ws.send(JSON.stringify(d))}function showPrivateChatRequest(from){const n=document.createElement('div');n.className='notification';n.innerHTML=`<div class="notification-header">Private Chat Request</div><div class="notification-body">${from} wants to chat</div><div class="notification-actions"><button class="notification-btn btn-accept">Accept</button><button class="notification-btn btn-decline">Decline</button></div>`;n.querySelector('.btn-accept').onclick=()=>{send({type:'privateChatResponse',from,accepted:true});n.remove()};n.querySelector('.btn-decline').onclick=()=>{send({type:'privateChatResponse',from,accepted:false});n.remove()};notifications.appendChild(n)}function handlePrivateChatAccepted(chatId,withUser){state.privateChats[chatId]=withUser;addDMToList(chatId,withUser);switchToPrivateChat(chatId,withUser)}function addDMToList(chatId,username){if(document.querySelector(`[data-chat-id="${chatId}"]`))return;const d=document.createElement('div');d.className='channel private';d.dataset.chatId=chatId;d.innerHTML=`<span class="channel-name">${username}</span><div class="channel-right"><button class="close-dm">×</button></div>`;d.querySelector('.close-dm').onclick=e=>{e.stopPropagation();d.remove();delete state.privateChats[chatId];delete state.privateMessages[chatId];if(state.unreadCounts[chatId]){state.totalUnread-=state.unreadCounts[chatId];delete state.unreadCounts[chatId];updateTitle();updateFavicon(state.totalUnread>0)}if(state.currentPrivateChat===chatId)switchChannel('general')};d.onclick=()=>switchToPrivateChat(chatId,username);dmList.appendChild(d)}function switchToPrivateChat(chatId,username){const oldId=state.currentChatType==='channel'?state.currentChannel:state.currentPrivateChat;if(oldId)clearUnread(oldId);state.currentChatType='private';state.currentPrivateChat=chatId;state.currentChannel=username;currentChannelEl.textContent=username;currentChannelEl.classList.add('private');messageInput.placeholder=`Message @${username}`;document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));const dm=document.querySelector(`[data-chat-id="${chatId}"]`);if(dm)dm.classList.add('active');if(!state.privateMessages[chatId])send({type:'getPrivateHistory',chatId});else renderMessages();state.typingUsers={};updateTypingIndicator();clearUnread(chatId)}function requestPrivateChat(username){if(username===state.username)return;send({type:'privateChatRequest',targetUsername:username})}async function compressImage(file){return new Promise(resolve=>{const reader=new FileReader();reader.onload=e=>{const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');let width=img.width,height=img.height;const maxSize=800;if(width>height){if(width>maxSize){height*=maxSize/width;width=maxSize}}else{if(height>maxSize){width*=maxSize/height;height=maxSize}}canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,width,height);canvas.toBlob(blob=>{const cr=new FileReader();cr.onloadend=()=>resolve({data:cr.result,name:file.name});cr.readAsDataURL(blob)},'image/jpeg',0.7)};img.src=e.target.result};reader.readAsDataURL(file)})}attachBtn.onclick=()=>fileInput.click();fileInput.onchange=async e=>{const file=e.target.files[0];if(!file)return;const compressed=await compressImage(file);state.selectedImage=compressed;imagePreviewContainer.innerHTML=`<div class="image-preview"><img src="${compressed.data}" class="preview-image"><button class="remove-preview">×</button></div>`;imagePreviewContainer.querySelector('.remove-preview').onclick=()=>{state.selectedImage=null;imagePreviewContainer.innerHTML='';fileInput.value=''}};function addMessage(){const text=messageInput.value.trim();if(!state.connected)return;if(state.selectedImage){if(state.currentChatType==='private'){send({type:'privateImageMessage',chatId:state.currentPrivateChat,imageData:state.selectedImage.data,fileName:state.selectedImage.name,targetUsername:state.privateChats[state.currentPrivateChat]})}else{send({type:'imageMessage',channel:state.currentChannel,imageData:state.selectedImage.data,fileName:state.selectedImage.name})}state.selectedImage=null;imagePreviewContainer.innerHTML='';fileInput.value=''}else if(text){if(state.currentChatType==='private'){send({type:'privateMessage',chatId:state.currentPrivateChat,text,targetUsername:state.privateChats[state.currentPrivateChat]})}else{send({type:'message',channel:state.currentChannel,text})}}messageInput.value='';stopTyping()}function addMessageToChannel(m){if(!state.messages[m.channel])state.messages[m.channel]=[];state.messages[m.channel].push(m);if(m.author!==state.username){incrementUnread(m.channel)}if(m.channel===state.currentChannel&&state.currentChatType==='channel')renderMessages()}function addPrivateMessage(m){if(!state.privateMessages[m.chatId])state.privateMessages[m.chatId]=[];state.privateMessages[m.chatId].push(m);if(m.author!==state.username){incrementUnread(m.chatId)}if(m.chatId===state.currentPrivateChat&&state.currentChatType==='private')renderMessages()}function loadHistory(c,m){state.messages[c]=m;if(c===state.currentChannel&&state.currentChatType==='channel')renderMessages()}function loadPrivateHistory(c,m){state.privateMessages[c]=m;if(c===state.currentPrivateChat&&state.currentChatType==='private')renderMessages()}function renderMessages(){let msgs=state.currentChatType==='private'?state.privateMessages[state.currentPrivateChat]||[]:state.messages[state.currentChannel]||[];messageArea.innerHTML='';msgs.forEach(m=>{const d=document.createElement('div');d.className='message';const av=document.createElement('div');av.className='message-avatar';av.textContent=m.author.charAt(0).toUpperCase();const cont=document.createElement('div');cont.className='message-content';const hdr=document.createElement('div');hdr.className='message-header';const auth=document.createElement('span');auth.className='message-author';auth.textContent=m.author;const ts=document.createElement('span');ts.className='message-timestamp';ts.textContent=formatTime(new Date(m.timestamp));hdr.appendChild(auth);hdr.appendChild(ts);cont.appendChild(hdr);if(m.isImage){const img=document.createElement('img');img.className='message-image';img.src=m.imageData;img.alt=m.fileName||'Image';img.onclick=()=>openImageModal(m.imageData);cont.appendChild(img)}else{const txt=document.createElement('div');txt.className='message-text';txt.textContent=m.text;cont.appendChild(txt)}d.appendChild(av);d.appendChild(cont);messageArea.appendChild(d)});messageArea.scrollTop=messageArea.scrollHeight}function openImageModal(src){modalImage.src=src;imageModal.classList.add('active')}function closeImageModal(){imageModal.classList.remove('active')}closeModalBtn.onclick=closeImageModal;imageModal.onclick=e=>{if(e.target===imageModal)closeImageModal()};function updateUserList(users){state.users=users;userList.innerHTML='';users.forEach(u=>{if(u===state.username)return;const el=document.createElement('div');el.className='user-list-item';el.innerHTML=`<span class="user-name">${u}</span><button class="dm-btn">DM</button>`;el.querySelector('.dm-btn').onclick=()=>requestPrivateChat(u);userList.appendChild(el)})}function handleTypingIndicator(d){if(state.currentChatType==='private'){if(d.isPrivate&&d.username===state.privateChats[state.currentPrivateChat]){d.isTyping?state.typingUsers[d.username]=true:delete state.typingUsers[d.username];updateTypingIndicator()}}else{if(d.channel===state.currentChannel&&!d.isPrivate){d.isTyping?state.typingUsers[d.username]=true:delete state.typingUsers[d.username];updateTypingIndicator()}}}function updateTypingIndicator(){const t=Object.keys(state.typingUsers);typingIndicator.textContent=t.length===0?'':t.length===1?`${t[0]} is typing...`:`${t.length} people are typing...`}function startTyping(){if(!state.connected)return;if(state.currentChatType==='private')send({type:'typing',channel:state.currentPrivateChat,isTyping:true,isPrivate:true,targetUsername:state.privateChats[state.currentPrivateChat]});else send({type:'typing',channel:state.currentChannel,isTyping:true});clearTimeout(typingTimeout);typingTimeout=setTimeout(stopTyping,3000)}function stopTyping(){if(!state.connected)return;if(state.currentChatType==='private')send({type:'typing',channel:state.currentPrivateChat,isTyping:false,isPrivate:true,targetUsername:state.privateChats[state.currentPrivateChat]});else send({type:'typing',channel:state.currentChannel,isTyping:false})}function formatTime(d){return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}function switchChannel(c){const oldId=state.currentChatType==='channel'?state.currentChannel:state.currentPrivateChat;if(oldId)clearUnread(oldId);state.currentChatType='channel';state.currentPrivateChat=null;state.currentChannel=c;currentChannelEl.textContent=c;currentChannelEl.classList.remove('private');messageInput.placeholder=`Message #${c}`;document.querySelectorAll('.channel').forEach(ch=>{ch.classList.remove('active');if(ch.dataset.channel===c)ch.classList.add('active')});if(!state.messages[c])send({type:'getHistory',channel:c});else renderMessages();state.typingUsers={};updateTypingIndicator();clearUnread(c)}sendBtn.onclick=e=>{e.preventDefault();addMessage()};messageInput.onkeypress=e=>{if(e.key==='Enter'){e.preventDefault();addMessage()}};messageInput.oninput=()=>{messageInput.value.length>0?startTyping():stopTyping()};channelList.onclick=e=>{const c=e.target.closest('.channel');if(c&&c.dataset.channel)switchChannel(c.dataset.channel)};init();
-    </script>
+<div id="loginOverlay">
+<div class="login-title">The Chet</div>
+<div id="loginCard">
+<h2>Enter Password</h2>
+<input type="password" id="pwdInput" placeholder="Password">
+<button id="loginBtn">Login</button>
+<div class="guest-login" id="guestLogin">or continue as Guest</div>
+<div id="loginError"></div>
+</div>
+</div>
+
+<div class="notifs" id="notifs"></div>
+
+<div class="modal-overlay" id="helpModal">
+<div class="modal">
+<div class="modal-header">
+<div class="modal-title">📋 Commands Help</div>
+<button class="modal-close" id="closeHelp">×</button>
+</div>
+<div class="modal-body" id="helpContent"></div>
+</div>
+</div>
+
+<div id="adminPanel">
+<div class="ap-header">
+<div class="ap-title">⚡ Admin Panel</div>
+<button class="ap-close" id="closeAdmin">×</button>
+</div>
+<div class="ap-tabs">
+<button class="ap-tab active" data-tab="users">Users</button>
+<button class="ap-tab" data-tab="mod">Moderate</button>
+<button class="ap-tab" data-tab="troll">Effects</button>
+<button class="ap-tab" data-tab="bans">Bans</button>
+<button class="ap-tab" data-tab="settings">Settings</button>
+<button class="ap-tab" data-tab="owner" id="ownerTab" style="display:none">👑 Owner</button>
+</div>
+<div class="ap-content">
+<div class="ap-section active" data-section="users" id="apUsers"></div>
+<div class="ap-section" data-section="mod">
+<div class="form-group">
+<label class="form-label">Target User</label>
+<select class="form-select" id="modUser"></select>
+</div>
+<div class="form-group">
+<label class="form-label">Action Type</label>
+<select class="form-select" id="modAction">
+<option value="kick">Kick User</option>
+<option value="timeout">Timeout</option>
+<option value="mute">Mute</option>
+<option value="ban">Ban</option>
+<option value="warning">Send Warning</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Duration (seconds)</label>
+<input type="number" class="form-input" id="modDur" value="60">
+</div>
+<div class="form-group">
+<label class="form-label">Reason (optional)</label>
+<input type="text" class="form-input" id="modReason" placeholder="Violation reason...">
+</div>
+<div class="ban-type-selector" id="banTypeSelector" style="display:none">
+<button class="ban-type-btn" data-type="username">Username Only</button>
+<button class="ban-type-btn selected" data-type="ip">IP Only</button>
+<button class="ban-type-btn" data-type="both">Both</button>
+</div>
+<button class="btn btn-primary" id="execMod">Execute Action</button>
+</div>
+<div class="ap-section" data-section="troll">
+<div class="form-group">
+<label class="form-label">Target User</label>
+<select class="form-select" id="trollUser"></select>
+</div>
+<div class="troll-grid">
+<button class="troll-btn danger" data-troll="forceDisconnect">🔌 DC</button>
+<button class="troll-btn success" id="confettiAll">🎊 All</button>
+</div>
+<div class="form-group">
+<label class="form-label">Server Broadcast</label>
+<input type="text" class="form-input" id="broadcastMsg" placeholder="Announcement message...">
+</div>
+<button class="btn btn-primary" id="sendBroadcast">📢 Broadcast to All</button>
+</div>
+<div class="ap-section" data-section="bans">
+<div class="form-label">Banned Usernames</div>
+<div class="ban-list" id="bannedUsers"></div>
+<div class="form-label">Banned IP Addresses</div>
+<div class="ban-list" id="bannedIPs"></div>
+<button class="btn btn-primary" id="refreshBans">🔄 Refresh Lists</button>
+</div>
+<div class="ap-section" data-section="settings">
+<div class="form-group">
+<label class="form-label">Slow Mode Duration (seconds)</label>
+<input type="number" class="form-input" id="slowDur" value="5">
+</div>
+<div class="form-group">
+<label style="color:#dcddde;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px">
+<input type="checkbox" id="slowEnabled"> Enable Slow Mode
+</label>
+</div>
+<button class="btn btn-primary" id="applySlowMode">Apply Slow Mode</button>
+<div class="form-group" style="margin-top:16px">
+<label class="form-label">Clear Channel Messages</label>
+<select class="form-select" id="clearChan">
+<option value="general">general</option>
+<option value="gaming">gaming</option>
+<option value="memes">memes</option>
+</select>
+</div>
+<button class="btn btn-danger" id="clearChatBtn">🗑️ Clear Channel</button>
+</div>
+<div class="ap-section" data-section="owner">
+<div class="owner-section">
+<div class="section-title">📢 Announcements</div>
+<input type="text" class="form-input" id="ownerAnnounce" placeholder="Persistent announcement...">
+<button class="btn btn-primary" style="width:100%;margin-top:6px" id="ownerAnnounceBtn">📢 Post Announcement</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="container">
+<div class="sidebar">
+<div class="server-header">The Chet</div>
+<div class="channels">
+<div class="channel-section">
+<div class="section-header">Channels</div>
+<div class="channel" data-channel="announcements">
+<span class="channel-name">announcements</span>
+<span class="unread-badge">0</span>
+</div>
+<div class="channel active" data-channel="general">
+<span class="channel-name">general</span>
+<span class="unread-badge">0</span>
+</div>
+<div class="channel" data-channel="gaming">
+<span class="channel-name">gaming</span>
+<span class="unread-badge">0</span>
+</div>
+<div class="channel" data-channel="memes">
+<span class="channel-name">memes</span>
+<span class="unread-badge">0</span>
+</div>
+</div>
+<div class="channel-section">
+<div class="section-header">Direct Messages</div>
+<div id="dmList"></div>
+</div>
+</div>
+<div class="user-area" id="userArea">
+<div class="user-avatar" id="myAvatar">U
+<div class="notif-dot" id="notifDot"></div>
+<div class="avatar-badge owner" id="badgeOwner">👑</div>
+<div class="avatar-badge admin" id="badgeAdmin">⚡</div>
+<div class="avatar-badge vip" id="badgeVip">⭐</div>
+</div>
+<div class="user-display-name" id="myName">User</div>
+<div class="conn-status" id="connStatus"></div>
+</div>
+</div>
+
+<div class="main-content">
+<div class="chat-header">
+<div class="current-channel" id="curChan">general</div>
+</div>
+<div class="messages" id="msgArea"></div>
+<div class="input-area">
+<div class="typing-indicator" id="typingInd"></div>
+<div class="reply-bar" id="replyBar">
+<span class="reply-bar-text" id="replyText"></span>
+<button class="reply-bar-close" id="cancelReply">×</button>
+</div>
+<div class="input-wrapper">
+<input type="text" class="msg-input" id="msgInput" placeholder="Message #general (try /help)" maxlength="2000">
+<button class="send-btn" id="sendBtn">Send</button>
+</div>
+</div>
+</div>
+
+<div class="sidebar right" id="rightSidebar">
+<div class="right-toggle" id="rightToggle">▶</div>
+<div class="server-header">
+<span>Online Users</span>
+<span class="online-count" id="onlineCount">0</span>
+</div>
+<div class="users-section">
+<div class="role-header owner-header" id="ownerHeader" style="display:none">👑 Owners</div>
+<div id="ownersList"></div>
+<div class="role-header admin-header" id="adminHeader" style="display:none">⚡ Admins</div>
+<div id="adminsList"></div>
+<div class="role-header vip-header" id="vipHeader" style="display:none">⭐ VIP</div>
+<div id="vipsList"></div>
+<div class="role-header guest-header" id="guestHeader" style="display:none">Users</div>
+<div id="guestsList"></div>
+</div>
+</div>
+</div>
+
+<script>
+const EMOJIS=['👍','👎','❤️','😂','😮','😢','🔥','🎉','👀','💯'];
+let ws,connected=false,username='',uuid=null,isAdmin=false,isVIP=false,isOwner=false;
+let curChan='general',chatType='channel',curDM=null,replyTo=null;
+const messages={},dmMessages={},dmPartners={},users=[],unreadChannels={},unreadDMs={};
+const $=id=>document.getElementById(id);
+let hasUnread=false,isTabVisible=true,selectedBanType='ip';
+
+document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
+
+const HELP_COMMANDS=[
+{name:'/help',desc:'Show this help menu'}
+];
+
+function updateFavicon(hasNotif){
+const fav=$('favicon');
+if(hasNotif){fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text><circle cx='85' cy='15' r='15' fill='%23ed4245'/></svg>"}
+else{fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text></svg>"}
+}
+
+function showFaviconNotif(){if(!isTabVisible){hasUnread=true;updateFavicon(true);$('notifDot').classList.add('show')}}
+function clearFaviconNotif(){hasUnread=false;updateFavicon(false);$('notifDot').classList.remove('show')}
+
+function send(d){if(ws&&ws.readyState===1)ws.send(JSON.stringify(d))}
+
+function notify(title,body,acts){
+const n=document.createElement('div');n.className='notif';
+n.innerHTML=`<div class="notif-title">${title}</div><div class="notif-body">${body}</div>${acts||''}`;
+$('notifs').appendChild(n);
+showFaviconNotif();
+if(!acts)setTimeout(()=>n.remove(),4000);
+return n;
+}
+
+function connect(){
+const url=location.protocol==='https:'?`wss://${location.host}`:`ws://${location.hostname}:${location.port||3000}`;
+ws=new WebSocket(url);
+ws.onopen=()=>{
+connected=true;$('connStatus').classList.add('online');$('sendBtn').disabled=false;
+send({type:'join',username,uuid,adminPassword:(isAdmin||isOwner)?'mod-is-rly-awesome':undefined,vipPassword:isVIP?'very-important-person':undefined,ownerPassword:isOwner?'10owna12':undefined});
+send({type:'getHistory',channel:curChan});
+};
+ws.onclose=()=>{connected=false;$('connStatus').classList.remove('online');$('sendBtn').disabled=true;setTimeout(connect,3000)};
+ws.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(er){console.error(er)}};
+}
+
+function handle(d){
+const h={
+joined:()=>{
+if(d.uuid){uuid=d.uuid;localStorage.setItem('uuid',uuid)}
+if(d.isAdmin){isAdmin=true;$('badgeAdmin').classList.add('show')}
+if(d.isVIP){isVIP=true;$('badgeVip').classList.add('show')}
+if(d.isOwner){isOwner=true;$('badgeOwner').classList.add('show');$('ownerTab').style.display='block'}
+},
+message:()=>{
+if(!messages[d.message.channel])messages[d.message.channel]=[];
+messages[d.message.channel].push(d.message);
+if(d.message.channel===curChan&&chatType==='channel')render();
+else{
+unreadChannels[d.message.channel]=(unreadChannels[d.message.channel]||0)+1;
+updateUnreadBadge(d.message.channel);
+showFaviconNotif();
+notify('💬 New Message',`#${d.message.channel}: ${d.message.author}: ${d.message.text.slice(0,50)}`);
+}
+},
+history:()=>{messages[d.channel]=d.messages;if(d.channel===curChan&&chatType==='channel')render()},
+userList:()=>{users.length=0;users.push(...d.users);updUsers()},
+typing:()=>{if((d.isPrivate&&dmPartners[curDM]===d.username)||(!d.isPrivate&&d.channel===curChan)){$('typingInd').textContent=d.isTyping?`${d.username} is typing...`:''}},
+privateChatRequest:()=>{
+const n=notify('💬 DM Request',`${d.from} wants to chat`,`<div class="notif-actions"><button class="notif-btn notif-accept" data-a="y">Accept</button><button class="notif-btn notif-decline" data-a="n">Decline</button></div>`);
+n.querySelector('[data-a="y"]').onclick=()=>{send({type:'privateChatResponse',from:d.from,accepted:true});n.remove()};
+n.querySelector('[data-a="n"]').onclick=()=>{send({type:'privateChatResponse',from:d.from,accepted:false});n.remove()};
+},
+privateChatAccepted:()=>{dmPartners[d.chatId]=d.with;addDM(d.chatId,d.with);switchDM(d.chatId,d.with)},
+privateChatRejected:()=>notify('❌',`${d.by} declined`),
+privateMessage:()=>{
+if(!dmMessages[d.message.chatId])dmMessages[d.message.chatId]=[];
+dmMessages[d.message.chatId].push(d.message);
+if(d.message.chatId===curDM&&chatType==='dm')render();
+else{
+unreadDMs[d.message.chatId]=(unreadDMs[d.message.chatId]||0)+1;
+updateDMBadge(d.message.chatId);
+showFaviconNotif();
+const partner=dmPartners[d.message.chatId];
+notify('💬 New DM',`@${partner}: ${d.message.text.slice(0,50)}`);
+}
+},
+privateHistory:()=>{dmMessages[d.chatId]=d.messages;if(d.chatId===curDM&&chatType==='dm')render()},
+reactionUpdate:()=>{const arr=d.isPrivate?dmMessages[d.chatId]:messages[d.channel];const m=arr?.find(x=>x.id===d.messageId);if(m){m.reactions=d.reactions;render()}},
+kicked:()=>{alert(d.message);location.href=d.redirectUrl||'https://google.com'},
+banned:()=>{alert(d.message);location.href='https://google.com'},
+timedOut:()=>notify('⏰',d.message),
+warning:()=>notify(`⚠️ Warning #${d.count}`,d.message),
+broadcast:()=>notify('📢',d.message),
+announcement:()=>{notify('📢',d.message.text);if(!messages.announcements)messages.announcements=[];messages.announcements.push(d.message);if(curChan==='announcements')render()},
+adminActionSuccess:()=>notify('✅',d.message||'Done'),
+error:()=>notify('❌',d.message),
+forceMute:()=>{notify('🔇',`Muted for ${d.duration}s`);$('msgInput').disabled=true;$('sendBtn').disabled=true;setTimeout(()=>{$('msgInput').disabled=false;$('sendBtn').disabled=!connected},d.duration*1000)},
+banList:()=>{$('bannedUsers').innerHTML=d.bannedUsers.length?d.bannedUsers.map(u=>`<div class="ban-item"><span>${u}</span><button class="unban-btn" onclick="send({type:'adminUnban',username:'${u}'})">Unban</button></div>`).join(''):'<div class="empty">None</div>';$('bannedIPs').innerHTML=d.bannedIPs.length?d.bannedIPs.map(ip=>`<div class="ban-item"><span>${ip}</span><button class="unban-btn" onclick="send({type:'adminUnbanIP',ip:'${ip}'})">Unban</button></div>`).join(''):'<div class="empty">None</div>'},
+chatCleared:()=>{if(messages[d.channel])messages[d.channel]=[];if(d.channel===curChan)render()},
+messageDeleted:()=>{if(messages[d.channel]){messages[d.channel]=messages[d.channel].filter(m=>m.id!==d.messageId);if(d.channel===curChan)render()}},
+spinScreen:()=>{document.body.style.animation='spin 2s linear';setTimeout(()=>document.body.style.animation='',2000)},
+shakeScreen:()=>{document.body.style.animation='shake .5s';setTimeout(()=>document.body.style.animation='',500)},
+flipScreen:()=>{document.body.style.transform='rotate(180deg)';setTimeout(()=>document.body.style.transform='',5000)},
+invertColors:()=>{document.body.style.filter='invert(1)';setTimeout(()=>document.body.style.filter='',5000)},
+rainbow:()=>{document.body.style.animation='rainbow 2s infinite';setTimeout(()=>document.body.style.animation='',5000)},
+blur:()=>{document.body.style.filter='blur(5px)';setTimeout(()=>document.body.style.filter='',5000)},
+matrix:()=>{document.body.style.cssText='background:#000!important';setTimeout(()=>document.body.style.cssText='',5000)},
+emojiSpam:()=>{for(let i=0;i<20;i++)setTimeout(()=>{const e=document.createElement('div');e.textContent=['😂','🔥','💀','🎉'][Math.floor(Math.random()*4)];e.style.cssText=`position:fixed;font-size:48px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;pointer-events:none;z-index:9999`;document.body.appendChild(e);setTimeout(()=>e.remove(),2000)},i*100)},
+confetti:()=>{const cols=['#ff0','#f0f','#0ff','#f00','#0f0'];for(let i=0;i<50;i++)setTimeout(()=>{const c=document.createElement('div');c.className='confetti';c.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${cols[Math.floor(Math.random()*5)]}`;document.body.appendChild(c);setTimeout(()=>c.remove(),3000)},i*40)},
+rickRoll:()=>window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ','_blank'),
+forceDisconnect:()=>{alert('Disconnected by admin');ws.close()}
+};
+if(h[d.type])h[d.type]();
+}
+
+function updateUnreadBadge(channel){
+const el=document.querySelector(`[data-channel="${channel}"]`);
+if(!el)return;
+const badge=el.querySelector('.unread-badge');
+const count=unreadChannels[channel]||0;
+if(badge){badge.textContent=count;el.classList.toggle('has-unread',count>0)}
+}
+
+function updateDMBadge(chatId){
+const el=document.querySelector(`[data-dm="${chatId}"]`);
+if(!el)return;
+const count=unreadDMs[chatId]||0;
+if(count>0){
+let badge=el.querySelector('.dm-badge');
+if(!badge){badge=document.createElement('span');badge.className='dm-badge';el.appendChild(badge)}
+badge.textContent=count;
+el.classList.add('has-unread');
+}else{
+const badge=el.querySelector('.dm-badge');
+if(badge)badge.remove();
+el.classList.remove('has-unread');
+}
+}
+
+function updUsers(){
+const ow=users.filter(u=>u.isOwner&&u.username!==username);
+const ad=users.filter(u=>u.isAdmin&&!u.isOwner&&u.username!==username);
+const vi=users.filter(u=>u.isVIP&&!u.isAdmin&&!u.isOwner&&u.username!==username);
+const gu=users.filter(u=>!u.isVIP&&!u.isAdmin&&!u.isOwner&&u.username!==username);
+
+const makeItem=(u)=>{
+let roleIcon='';
+let roleBadge='';
+if(u.isOwner){roleIcon='👑';roleBadge='<span class="role-badge owner">OWNER</span>'}
+else if(u.isAdmin){roleIcon='⚡';roleBadge='<span class="role-badge admin">ADMIN</span>'}
+else if(u.isVIP){roleIcon='⭐';roleBadge='<span class="role-badge vip">VIP</span>'}
+return `<div class="user-item"><span class="user-name">${roleIcon} ${u.username}${roleBadge}</span><button class="dm-btn" onclick="reqDM('${u.username}')">DM</button></div>`;
+};
+
+$('ownerHeader').style.display=ow.length?'block':'none';
+$('ownersList').innerHTML=ow.map(makeItem).join('');
+$('adminHeader').style.display=ad.length?'block':'none';
+$('adminsList').innerHTML=ad.map(makeItem).join('');
+$('vipHeader').style.display=vi.length?'block':'none';
+$('vipsList').innerHTML=vi.map(makeItem).join('');
+$('guestHeader').style.display=gu.length?'block':'none';
+$('guestsList').innerHTML=gu.map(makeItem).join('');
+$('onlineCount').textContent=users.length-1;
+updSelects();
+}
+
+function updSelects(){
+const others=users.filter(u=>u.username!==username);
+const opts='<option value="">-- Select User --</option>'+others.map(u=>`<option value="${u.username}">${u.username}</option>`).join('');
+['modUser','trollUser'].forEach(id=>{const el=$(id);if(el)el.innerHTML=opts});
+$('apUsers').innerHTML=others.length?others.map(u=>`<div class="ap-user"><div class="ap-user-info"><div class="ap-user-avatar">${u.username[0].toUpperCase()}</div><div class="ap-user-name">${u.username}${u.isOwner?' <span class="role-badge owner">OWNER</span>':u.isAdmin?' <span class="role-badge admin">ADMIN</span>':u.isVIP?' <span class="role-badge vip">VIP</span>':''}</div></div><div class="ap-user-actions"><button class="ap-btn ap-btn-kick" onclick="send({type:'adminKick',targetUsername:'${u.username}'})">Kick</button><button class="ap-btn ap-btn-to" onclick="send({type:'adminTimeout',targetUsername:'${u.username}',duration:60})">TO</button><button class="ap-btn ap-btn-mute" onclick="send({type:'adminForceMute',targetUsername:'${u.username}',duration:60})">Mute</button><button class="ap-btn ap-btn-ban" onclick="quickBan('${u.username}')">Ban</button></div></div>`).join(''):'<div class="empty">No other users online</div>';
+}
+
+function quickBan(username){
+if(confirm(`Ban ${username}?`)){
+send({type:'adminBan',targetUsername:username,banType:selectedBanType});
+}
+}
+
+function reqDM(u){send({type:'privateChatRequest',targetUsername:u})}
+
+function addDM(id,name){
+if(document.querySelector(`[data-dm="${id}"]`))return;
+const el=document.createElement('div');el.className='channel private';el.dataset.dm=id;
+el.innerHTML=`<span class="channel-name">${name}</span><button class="close-dm">×</button>`;
+el.querySelector('.close-dm').onclick=e=>{e.stopPropagation();el.remove();delete dmPartners[id];delete dmMessages[id];delete unreadDMs[id];if(curDM===id)switchChan('general')};
+el.onclick=()=>switchDM(id,name);
+$('dmList').appendChild(el);
+}
+
+function switchChan(ch){
+chatType='channel';curDM=null;curChan=ch;
+$('curChan').textContent=ch;$('curChan').classList.remove('private');
+$('msgInput').placeholder=`Message #${ch} (try /help)`;
+document.querySelectorAll('.channel').forEach(c=>{c.classList.remove('active');if(c.dataset.channel===ch)c.classList.add('active')});
+if(!messages[ch])send({type:'getHistory',channel:ch});else render();
+unreadChannels[ch]=0;
+updateUnreadBadge(ch);
+clearFaviconNotif();
+}
+
+function switchDM(id,name){
+chatType='dm';curDM=id;
+$('curChan').textContent=name;$('curChan').classList.add('private');
+$('msgInput').placeholder=`Message @${name}`;
+document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
+document.querySelector(`[data-dm="${id}"]`)?.classList.add('active');
+if(!dmMessages[id])send({type:'getPrivateHistory',chatId:id});else render();
+unreadDMs[id]=0;
+updateDMBadge(id);
+clearFaviconNotif();
+}
+
+function render(){
+const arr=chatType==='dm'?dmMessages[curDM]||[]:messages[curChan]||[];
+$('msgArea').innerHTML=arr.map(m=>{
+const authorClass=m.isOwner?'owner':m.isAdmin?'admin':m.isVIP?'vip':'normal';
+const badge=m.isOwner?'<span class="role-badge owner">OWNER</span>':m.isAdmin?'<span class="role-badge admin">ADMIN</span>':m.isVIP?'<span class="role-badge vip">VIP</span>':'';
+const replyHtml=m.replyTo?`<div class="msg-reply"><span class="msg-reply-author">↩ ${m.replyTo.author}:</span> ${m.replyTo.text}</div>`:'';
+let reactHtml='';
+if(m.reactions&&Object.keys(m.reactions).length){
+reactHtml='<div class="reactions">'+Object.entries(m.reactions).map(([e,u])=>`<div class="reaction${u.includes(username)?' active':''}" onclick="${u.includes(username)?'remReact':'addReact'}('${m.id}','${e}')">${e}<span class="reaction-count">${u.length}</span></div>`).join('')+'</div>';
+}
+const adminBtns=(isAdmin||isOwner)&&!m.isSystem?`<button class="msg-action" onclick="send({type:'adminDeleteMessage',messageId:'${m.id}',channel:'${m.channel||curChan}'})">🗑️</button>`:'';
+return `<div class="message" data-id="${m.id}"><div class="msg-avatar">${m.author[0].toUpperCase()}</div><div class="msg-content">${replyHtml}<div class="msg-header"><span class="msg-author ${authorClass}">${m.author}</span>${badge}<span class="msg-time">${new Date(m.timestamp).toLocaleTimeString().slice(0,5)}</span></div><div class="msg-text">${esc(m.text)}</div>${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
+}).join('');
+$('msgArea').scrollTop=$('msgArea').scrollHeight;
+}
+
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function toggleEmoji(id){document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'));$('ep-'+id)?.classList.toggle('show')}
+function addReact(id,e){send({type:'addReaction',messageId:id,emoji:e,channel:curChan,isPrivate:chatType==='dm',chatId:curDM})}
+function remReact(id,e){send({type:'removeReaction',messageId:id,emoji:e,channel:curChan,isPrivate:chatType==='dm',chatId:curDM})}
+function setReply(r){replyTo=r;$('replyText').innerHTML=`Replying to <b>${r.author}</b>`;$('replyBar').classList.add('show');$('msgInput').focus()}
+function clearReply(){replyTo=null;$('replyBar').classList.remove('show')}
+
+function sendMsg(){
+const t=$('msgInput').value.trim();
+if(!t||!connected)return;
+if(t.startsWith('/')){
+const cmd=t.split(' ')[0].toLowerCase();
+if(cmd==='/help'){
+showHelp();
+$('msgInput').value='';
+return;
+}
+}
+if(chatType==='dm')send({type:'privateMessage',chatId:curDM,text:t,targetUsername:dmPartners[curDM],replyTo});
+else send({type:'message',channel:curChan,text:t,replyTo});
+$('msgInput').value='';
+clearReply();
+}
+
+function showHelp(){
+const html=HELP_COMMANDS.map(c=>`<div class="help-command"><div class="help-command-name">${c.name}</div><div class="help-command-desc">${c.desc}</div></div>`).join('');
+$('helpContent').innerHTML=html;
+$('helpModal').classList.add('show');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+$('loginBtn').onclick=tryLogin;
+$('guestLogin').onclick=()=>{tryLogin('classic')};
+$('pwdInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
+
+function tryLogin(guestMode){
+const p=guestMode||$('pwdInput').value.trim();
+if(p==='10owna12'){isAdmin=true;isOwner=true}
+else if(p==='mod-is-rly-awesome'){isAdmin=true}
+else if(p==='very-important-person'){isVIP=true}
+else if(p==='classic'||guestMode==='classic'){}
+else{$('loginError').textContent='Wrong password';return}
+
+let u=prompt('Enter username (max 30 chars):','User')||'User';
+username=u.slice(0,30).trim()||'User';
+$('myName').textContent=username;
+$('myAvatar').childNodes[0].textContent=username[0].toUpperCase();
+
+if(isOwner)$('badgeOwner').classList.add('show');
+else if(isAdmin)$('badgeAdmin').classList.add('show');
+else if(isVIP)$('badgeVip').classList.add('show');
+
+if(isOwner)$('ownerTab').style.display='block';
+
+uuid=localStorage.getItem('uuid')||null;
+$('loginOverlay').style.display='none';
+connect();
+}
+
+$('sendBtn').onclick=sendMsg;
+$('msgInput').onkeypress=e=>{if(e.key==='Enter')sendMsg()};
+$('cancelReply').onclick=clearReply;
+
+document.querySelectorAll('.channel[data-channel]').forEach(c=>{c.onclick=()=>switchChan(c.dataset.channel)});
+
+$('closeHelp').onclick=()=>$('helpModal').classList.remove('show');
+
+$('userArea').onclick=()=>{
+clearFaviconNotif();
+if(isAdmin||isOwner){$('adminPanel').classList.toggle('show');updSelects();send({type:'adminGetBanList'})}
+};
+
+$('closeAdmin').onclick=()=>$('adminPanel').classList.remove('show');
+
+$('rightToggle').onclick=()=>{
+$('rightSidebar').classList.toggle('collapsed');
+$('rightToggle').textContent=$('rightSidebar').classList.contains('collapsed')?'◀':'▶';
+};
+
+document.querySelectorAll('.ap-tab').forEach(tab=>{
+tab.onclick=()=>{
+document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.ap-section').forEach(s=>s.classList.remove('active'));
+tab.classList.add('active');
+const sec=document.querySelector(`.ap-section[data-section="${tab.dataset.tab}"]`);
+if(sec)sec.classList.add('active');
+}
+});
+
+document.querySelectorAll('.ban-type-btn').forEach(btn=>{
+btn.onclick=()=>{
+document.querySelectorAll('.ban-type-btn').forEach(b=>b.classList.remove('selected'));
+btn.classList.add('selected');
+selectedBanType=btn.dataset.type;
+}
+});
+
+$('modAction').onchange=()=>{
+const action=$('modAction').value;
+$('banTypeSelector').style.display=action==='ban'?'flex':'none';
+};
+
+$('execMod').onclick=()=>{
+const u=$('modUser').value,a=$('modAction').value,d=parseInt($('modDur').value)||60,r=$('modReason').value;
+if(!u)return notify('❌','Select user');
+if(a==='kick')send({type:'adminKick',targetUsername:u,reason:r});
+else if(a==='timeout')send({type:'adminTimeout',targetUsername:u,duration:d,reason:r});
+else if(a==='mute')send({type:'adminForceMute',targetUsername:u,duration:d});
+else if(a==='ban')send({type:'adminBan',targetUsername:u,banType:selectedBanType,reason:r});
+else if(a==='warning')send({type:'adminWarning',targetUsername:u,reason:r||'Warning'});
+};
+
+document.querySelectorAll('[data-troll]').forEach(b=>{
+b.onclick=()=>{
+const u=$('trollUser').value;if(!u)return notify('❌','Select user');
+const t=b.dataset.troll;
+send({type:'admin'+t.charAt(0).toUpperCase()+t.slice(1),targetUsername:u});
+}
+});
+
+$('confettiAll').onclick=()=>send({type:'adminConfetti'});
+
+$('sendBroadcast').onclick=()=>{const m=$('broadcastMsg').value;if(m){send({type:'adminBroadcast',message:m});$('broadcastMsg').value=''}};
+
+$('refreshBans').onclick=()=>send({type:'adminGetBanList'});
+
+$('applySlowMode').onclick=()=>send({type:'adminSlowMode',enabled:$('slowEnabled').checked,duration:parseInt($('slowDur').value)||5});
+
+$('clearChatBtn').onclick=()=>{if(confirm('Clear chat?'))send({type:'adminClearChat',channel:$('clearChan').value})};
+
+$('ownerAnnounceBtn').onclick=()=>{const t=$('ownerAnnounce').value;if(t){send({type:'ownerAnnouncement',text:t});$('ownerAnnounce').value=''}};
+
+document.onclick=e=>{if(!e.target.closest('.emoji-picker')&&!e.target.closest('.msg-action'))document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'))};
+
+$('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList.remove('show')};
+});
+</script>
 </body>
-</html>
+</html> warn" data-troll="spinScreen">🌀 Spin</button>
+<button class="troll-btn warn" data-troll="shakeScreen">📳 Shake</button>
+<button class="troll-btn warn" data-troll="flipScreen">🙃 Flip</button>
+<button class="troll-btn warn" data-troll="invertColors">🎨 Invert</button>
+<button class="troll-btn" data-troll="emojiSpam">😂 Emoji</button>
+<button class="troll-btn" data-troll="rainbow">🌈 Rainbow</button>
+<button class="troll-btn" data-troll="blur">👓 Blur</button>
+<button class="troll-btn" data-troll="matrix">💚 Matrix</button>
+<button class="troll-btn success" data-troll="confetti">🎉 Confetti</button>
+<button class="troll-btn danger" data-troll="rickRoll">🎵 Rick</button>
+<button class="troll-btn
