@@ -1,7 +1,7 @@
 {
-  "name": "simple-chat-app",
+  "name": "the-chet-chat",
   "version": "1.0.0",
-  "description": "A simple Discord-like chat application with WebSocket support",
+  "description": "A Discord-like chat application with channels, DMs, and moderation",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,8 @@
   "keywords": [
     "chat",
     "websocket",
-    "real-time"
+    "real-time",
+    "messaging"
   ],
   "author": "",
   "license": "MIT",
@@ -20,5 +21,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
