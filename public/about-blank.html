@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About:Blank Launcher</title>
+    <style>
+        /* Main page styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background: #333;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h2 { margin-top: 0; }
+
+        input {
+            width: 70%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: #444;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin-left: 10px;
+            background-color: #00d26a;
+            color: #000;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #00b359;
+        }
+
+        p.note {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Open in about:blank</h2>
+        <div>
+            <input type="text" id="urlInput" placeholder="example.com" />
+            <button onclick="openInNewTab()">Go</button>
+        </div>
+        <p class="note">Note: Sites like Google or YouTube may fail to load due to security settings.</p>
+    </div>
+
+    <script>
+        function openInNewTab() {
+            // 1. Get the URL
+            let url = document.getElementById('urlInput').value.trim();
+
+            if (!url) return;
+
+            // 2. Add https:// if missing
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+
+            // 3. Open a new blank window
+            // Note: This must be triggered by a user action (click) to avoid popup blockers
+            const win = window.open('about:blank', '_blank');
+
+            // 4. Validate that the window opened (popup blocker check)
+            if (!win) {
+                alert('Please allow popups for this website to use this feature.');
+                return;
+            }
+
+            // 5. Inject the HTML for the full-screen iframe into the new window
+            // We use standard HTML/CSS for the injected content to ensure it fills the screen
+            win.document.write(`
+                <!DOCTYPE html>
+                <html style="margin:0; height:100%; overflow:hidden;">
+                <head>
+                    <title>Classes</title> 
+                    <style>
+                        body {
+                            margin: 0;
+                            height: 100%;
+                            width: 100%;
+                            overflow: hidden; /* Hide scrollbars on parent */
+                        }
+                        iframe {
+                            border: none;
+                            width: 100vw; /* 100% of viewport width */
+                            height: 100vh; /* 100% of viewport height */
+                            display: block;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" allowfullscreen></iframe>
+                </body>
+                </html>
+            `);
+
+            // 6. Close the document stream so the browser knows writing is finished
+            win.document.close();
+        }
+
+        // Allow "Enter" key to trigger the button
+        document.getElementById('urlInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                openInNewTab();
+            }
+        });
+    </script>
+
+</body>
+</html>
