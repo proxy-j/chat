@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxys</title>
+    <style>
+        /* 1. Set up the page layout */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: sans-serif;
+            display: flex;         /* Use Flexbox to stack items */
+            flex-direction: column; /* Stack top-to-bottom */
+            overflow: hidden;      /* No scrollbars on the main page */
+        }
+
+        /* 2. Style the top navigation bar */
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            display: flex;
+            gap: 10px; /* Space between buttons */
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10; /* Ensures bar stays on top */
+        }
+
+        /* 3. Style the buttons */
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #777;
+        }
+
+        /* 4. Style the iframe to take ALL remaining space */
+        iframe {
+            flex-grow: 1;  /* This forces the iframe to fill the rest of the screen */
+            width: 100%;
+            border: none;
+            background-color: #f0f0f0; /* Placeholder color while loading */
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <strong>CHET PROXIES:</strong>
+        <button onclick="loadPage('https://skibidiboi333.zjhmz.cn/')">RAMMERHEAD</button>
+        <button onclick="loadPage('https://amp.nov.su/')">SPACE</button>
+        <button onclick="loadPage('https://interstellar-v3-68n.pages.dev/')">INTERSTELLAR</button>
+    </nav>
+
+    <iframe id="main-iframe" src="https://skibidiboi333.zjhmz.cn/"></iframe>
+
+    <script>
+        function loadPage(url) {
+            document.getElementById('main-iframe').src = url;
+        }
+    </script>
+
+</body>
+</html>
