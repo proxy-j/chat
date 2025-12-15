@@ -489,7 +489,10 @@ privateChatAccepted:()=>{dmPartners[d.chatId]=d.with;addDM(d.chatId,d.with);swit
 privateChatRejected:()=>notify('❌',`${d.by} declined`),
 privateMessage:()=>{
 if(!dmMessages[d.message.chatId])dmMessages[d.message.chatId]=[];
+// Check if message already exists to prevent duplicates
+if(!dmMessages[d.message.chatId].find(m=>m.id===d.message.id)){
 dmMessages[d.message.chatId].push(d.message);
+}
 if(d.message.chatId===curDM&&chatType==='dm')render();
 else{
 unreadDMs[d.message.chatId]=(unreadDMs[d.message.chatId]||0)+1;
