@@ -100,7 +100,7 @@ function canModerate(moderator, target) {
 
 // WebSocket connection handler
 wss.on('connection', (ws, req) => {
-  const clientIP = req.socket.remoteAddress;
+  const clientIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
 
   // Check IP ban
   if (bannedIPs.has(clientIP)) {
