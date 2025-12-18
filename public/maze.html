@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Maze Runner v4</title>
+    <style>
+        /* DARK THEME CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 { margin-bottom: 5px; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        .top-bar {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #1e1e1e;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffcc;
+            min-width: 90px;
+            text-align: right;
+        }
+
+        label { color: #aaa; font-weight: bold; font-size: 14px; }
+
+        select, button, input {
+            padding: 8px 12px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        /* Custom size input hidden by default */
+        #custom-size-input {
+            width: 60px;
+            display: none; 
+            border: 1px solid #007bff;
+        }
+
+        button {
+            background-color: #007bff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #0056b3; }
+
+        .game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border: 4px solid #444;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+
+        /* POP-UP MODAL STYLES */
+        #modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-title { font-size: 28px; margin-bottom: 10px; color: #28a745; }
+        .modal-time { font-size: 20px; margin-bottom: 20px; color: #fff; }
+        .modal-btn {
+            background-color: #28a745;
+            padding: 10px 25px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .modal-btn:hover { background-color: #218838; }
+        
+        .modal-hint { font-size: 12px; color: #888; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+        strong { color: #ddd; }
+    </style>
+</head>
+<body>
+
+    <h1>Maze Runner</h1>
+
+    <div class="top-bar">
+        <div>
+            <label for="difficulty">Size:</label>
+            <select id="difficulty" onchange="toggleCustomInput()">
+                <option value="5">Easy (5x5)</option>
+                <option value="10">Medium (10x10)</option>
+                <option value="20">Hard (20x20)</option>
+                <option value="30">Difficult (30x30)</option>
+                <option value="40">Insane (40x40)</option>
+                <option value="custom">Custom Size</option>
+            </select>
+            <input type="number" id="custom-size-input" placeholder="Size" min="3" max="100" value="50">
+        </div>
+        <div>
+            <label>Time:</label>
+            <span id="timer" class="timer-display">0.00s</span>
+        </div>
+        <button onclick="initGame()">Reset</button>
+    </div>
+
+    <div class="game-container">
+        <canvas id="mazeCanvas" width="600" height="600"></canvas>
+        
+        <div id="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">Maze Complete!</div>
+                <div class="modal-time" id="final-time-text">Your time: 0.00s</div>
+                <button class="modal-btn" onclick="initGame()">Continue</button>
+                <div class="modal-hint">Press <strong>Enter</strong> to restart</div>
+            </div>
+        </div>
+    </div>
+    
+    <p class="instructions">Move with <strong>Arrows/WASD</strong>. Reset with <strong>Enter</strong>.</p>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const difficultySelect = document.getElementById('difficulty');
+        const customInput = document.getElementById('custom-size-input');
+        const modal = document.getElementById('modal-overlay');
+        const finalTimeText = document.getElementById('final-time-text');
+        const timerElement = document.getElementById('timer');
+
+        let cols, rows;
+        let size;
+        let grid = [];
+        let stack = [];
+        let player = { c: 0, r: 0 };
+        let goal = { c: 0, r: 0 };
+        let isGameActive = false;
+        let hasStartedMoving = false;
+
+        let startTime = 0;
+        let timerInterval = null;
+
+        class Cell {
+            constructor(c, r) {
+                this.c = c;
+                this.r = r;
+                this.walls = [true, true, true, true]; // Top, Right, Bottom, Left
+                this.visited = false;
+            }
+
+            checkNeighbors() {
+                let neighbors = [];
+                let top = grid[index(this.c, this.r - 1)];
+                let right = grid[index(this.c + 1, this.r)];
+                let bottom = grid[index(this.c, this.r + 1)];
+                let left = grid[index(this.c - 1, this.r)];
+
+                if (top && !top.visited) neighbors.push(top);
+                if (right && !right.visited) neighbors.push(right);
+                if (bottom && !bottom.visited) neighbors.push(bottom);
+                if (left && !left.visited) neighbors.push(left);
+
+                if (neighbors.length > 0) {
+                    let r = Math.floor(Math.random() * neighbors.length);
+                    return neighbors[r];
+                }
+                return undefined;
+            }
+
+            draw() {
+                let x = this.c * size;
+                let y = this.r * size;
+
+                ctx.strokeStyle = "#ffffff"; 
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                if (this.walls[0]) { ctx.moveTo(x, y); ctx.lineTo(x + size, y); }
+                if (this.walls[1]) { ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size); }
+                if (this.walls[2]) { ctx.moveTo(x + size, y + size); ctx.lineTo(x, y + size); }
+                if (this.walls[3]) { ctx.moveTo(x, y + size); ctx.lineTo(x, y); }
+                ctx.stroke();
+            }
+        }
+
+        function index(c, r) {
+            if (c < 0 || r < 0 || c > cols - 1 || r > rows - 1) return -1;
+            return c + r * cols;
+        }
+
+        function removeWalls(a, b) {
+            let x = a.c - b.c;
+            if (x === 1) { a.walls[3] = false; b.walls[1] = false; }
+            else if (x === -1) { a.walls[1] = false; b.walls[3] = false; }
+            let y = a.r - b.r;
+            if (y === 1) { a.walls[0] = false; b.walls[2] = false; }
+            else if (y === -1) { a.walls[2] = false; b.walls[0] = false; }
+        }
+
+        function generateMaze() {
+            grid = [];
+            stack = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    grid.push(new Cell(c, r));
+                }
+            }
+            let current = grid[0];
+            current.visited = true;
+            let unvisitedCount = rows * cols - 1;
+
+            while (unvisitedCount > 0 || stack.length > 0) {
+                let next = current.checkNeighbors();
+                if (next) {
+                    next.visited = true;
+                    stack.push(current);
+                    removeWalls(current, next);
+                    current = next;
+                    unvisitedCount--;
+                } else if (stack.length > 0) {
+                    current = stack.pop();
+                } else {
+                    break; 
+                }
+            }
+        }
+
+        function drawGame() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < grid.length; i++) {
+                grid[i].draw();
+            }
+
+            let gx = goal.c * size + size * 0.2;
+            let gy = goal.r * size + size * 0.2;
+            ctx.fillStyle = "#0088ff"; 
+            ctx.beginPath();
+            ctx.rect(gx, gy, size * 0.6, size * 0.6);
+            ctx.fill();
+            ctx.shadowColor = "#0088ff";
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+
+            let px = player.c * size + size / 2;
+            let py = player.r * size + size / 2;
+            ctx.fillStyle = "#00ff00";
+            ctx.beginPath();
+            ctx.arc(px, py, size / 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                timerElement.innerText = (elapsed / 1000).toFixed(2) + "s";
+            }, 30);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function checkWin() {
+            if (player.c === goal.c && player.r === goal.r) {
+                isGameActive = false;
+                stopTimer();
+                let finalTime = (Date.now() - startTime) / 1000;
+                let formattedTime = finalTime.toFixed(2) + "s";
+                finalTimeText.innerText = "Your time: " + formattedTime;
+                modal.style.display = "flex";
+            }
+        }
+
+        function movePlayer(dc, dr) {
+            if (!isGameActive) return;
+
+            if (!hasStartedMoving) {
+                hasStartedMoving = true;
+                startTimer();
+            }
+
+            let currentCell = grid[index(player.c, player.r)];
+            let targetC = player.c + dc;
+            let targetR = player.r + dr;
+
+            if (targetC < 0 || targetC >= cols || targetR < 0 || targetR >= rows) return;
+            if (dr === -1 && currentCell.walls[0]) return;
+            if (dc === 1 && currentCell.walls[1]) return;
+            if (dr === 1 && currentCell.walls[2]) return;
+            if (dc === -1 && currentCell.walls[3]) return;
+
+            player.c = targetC;
+            player.r = targetR;
+            drawGame();
+            checkWin();
+        }
+
+        function toggleCustomInput() {
+            if (difficultySelect.value === 'custom') {
+                customInput.style.display = 'inline-block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                initGame(); // Auto restart if switching back to preset
+            }
+        }
+
+        function initGame() {
+            modal.style.display = "none";
+            timerElement.innerText = "0.00s";
+            document.activeElement.blur(); 
+            stopTimer();
+
+            // Determine Grid Size
+            let dim;
+            if (difficultySelect.value === 'custom') {
+                dim = parseInt(customInput.value);
+                // Safety Limits
+                if (isNaN(dim) || dim < 3) dim = 3;
+                if (dim > 100) dim = 100;
+                customInput.value = dim; // reflect clamped value
+            } else {
+                dim = parseInt(difficultySelect.value);
+            }
+            
+            cols = dim;
+            rows = dim;
+            size = canvas.width / cols;
+
+            player = { c: 0, r: 0 };
+            goal = { c: cols - 1, r: rows - 1 };
+            
+            isGameActive = true;
+            hasStartedMoving = false; 
+            
+            generateMaze();
+            drawGame();
+            
+            window.focus();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                initGame();
+                return;
+            }
+
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); break;
+                case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); break;
+                case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); break;
+                case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); break;
+            }
+        });
+
+        // Initialize
+        initGame();
+
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Maze Runner v4</title>
+    <style>
+        /* DARK THEME CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 { margin-bottom: 5px; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        .top-bar {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #1e1e1e;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffcc;
+            min-width: 90px;
+            text-align: right;
+        }
+
+        label { color: #aaa; font-weight: bold; font-size: 14px; }
+
+        select, button, input {
+            padding: 8px 12px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        /* Custom size input hidden by default */
+        #custom-size-input {
+            width: 60px;
+            display: none; 
+            border: 1px solid #007bff;
+        }
+
+        button {
+            background-color: #007bff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #0056b3; }
+
+        .game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border: 4px solid #444;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+
+        /* POP-UP MODAL STYLES */
+        #modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-title { font-size: 28px; margin-bottom: 10px; color: #28a745; }
+        .modal-time { font-size: 20px; margin-bottom: 20px; color: #fff; }
+        .modal-btn {
+            background-color: #28a745;
+            padding: 10px 25px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .modal-btn:hover { background-color: #218838; }
+        
+        .modal-hint { font-size: 12px; color: #888; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+        strong { color: #ddd; }
+    </style>
+</head>
+<body>
+
+    <h1>Maze Runner</h1>
+
+    <div class="top-bar">
+        <div>
+            <label for="difficulty">Size:</label>
+            <select id="difficulty" onchange="toggleCustomInput()">
+                <option value="5">Easy (5x5)</option>
+                <option value="10">Medium (10x10)</option>
+                <option value="20">Hard (20x20)</option>
+                <option value="30">Difficult (30x30)</option>
+                <option value="40">Insane (40x40)</option>
+                <option value="custom">Custom Size</option>
+            </select>
+            <input type="number" id="custom-size-input" placeholder="Size" min="3" max="100" value="50">
+        </div>
+        <div>
+            <label>Time:</label>
+            <span id="timer" class="timer-display">0.00s</span>
+        </div>
+        <button onclick="initGame()">Reset</button>
+    </div>
+
+    <div class="game-container">
+        <canvas id="mazeCanvas" width="600" height="600"></canvas>
+        
+        <div id="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">Maze Complete!</div>
+                <div class="modal-time" id="final-time-text">Your time: 0.00s</div>
+                <button class="modal-btn" onclick="initGame()">Continue</button>
+                <div class="modal-hint">Press <strong>Enter</strong> to restart</div>
+            </div>
+        </div>
+    </div>
+    
+    <p class="instructions">Move with <strong>Arrows/WASD</strong>. Reset with <strong>Enter</strong>.</p>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const difficultySelect = document.getElementById('difficulty');
+        const customInput = document.getElementById('custom-size-input');
+        const modal = document.getElementById('modal-overlay');
+        const finalTimeText = document.getElementById('final-time-text');
+        const timerElement = document.getElementById('timer');
+
+        let cols, rows;
+        let size;
+        let grid = [];
+        let stack = [];
+        let player = { c: 0, r: 0 };
+        let goal = { c: 0, r: 0 };
+        let isGameActive = false;
+        let hasStartedMoving = false;
+
+        let startTime = 0;
+        let timerInterval = null;
+
+        class Cell {
+            constructor(c, r) {
+                this.c = c;
+                this.r = r;
+                this.walls = [true, true, true, true]; // Top, Right, Bottom, Left
+                this.visited = false;
+            }
+
+            checkNeighbors() {
+                let neighbors = [];
+                let top = grid[index(this.c, this.r - 1)];
+                let right = grid[index(this.c + 1, this.r)];
+                let bottom = grid[index(this.c, this.r + 1)];
+                let left = grid[index(this.c - 1, this.r)];
+
+                if (top && !top.visited) neighbors.push(top);
+                if (right && !right.visited) neighbors.push(right);
+                if (bottom && !bottom.visited) neighbors.push(bottom);
+                if (left && !left.visited) neighbors.push(left);
+
+                if (neighbors.length > 0) {
+                    let r = Math.floor(Math.random() * neighbors.length);
+                    return neighbors[r];
+                }
+                return undefined;
+            }
+
+            draw() {
+                let x = this.c * size;
+                let y = this.r * size;
+
+                ctx.strokeStyle = "#ffffff"; 
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                if (this.walls[0]) { ctx.moveTo(x, y); ctx.lineTo(x + size, y); }
+                if (this.walls[1]) { ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size); }
+                if (this.walls[2]) { ctx.moveTo(x + size, y + size); ctx.lineTo(x, y + size); }
+                if (this.walls[3]) { ctx.moveTo(x, y + size); ctx.lineTo(x, y); }
+                ctx.stroke();
+            }
+        }
+
+        function index(c, r) {
+            if (c < 0 || r < 0 || c > cols - 1 || r > rows - 1) return -1;
+            return c + r * cols;
+        }
+
+        function removeWalls(a, b) {
+            let x = a.c - b.c;
+            if (x === 1) { a.walls[3] = false; b.walls[1] = false; }
+            else if (x === -1) { a.walls[1] = false; b.walls[3] = false; }
+            let y = a.r - b.r;
+            if (y === 1) { a.walls[0] = false; b.walls[2] = false; }
+            else if (y === -1) { a.walls[2] = false; b.walls[0] = false; }
+        }
+
+        function generateMaze() {
+            grid = [];
+            stack = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    grid.push(new Cell(c, r));
+                }
+            }
+            let current = grid[0];
+            current.visited = true;
+            let unvisitedCount = rows * cols - 1;
+
+            while (unvisitedCount > 0 || stack.length > 0) {
+                let next = current.checkNeighbors();
+                if (next) {
+                    next.visited = true;
+                    stack.push(current);
+                    removeWalls(current, next);
+                    current = next;
+                    unvisitedCount--;
+                } else if (stack.length > 0) {
+                    current = stack.pop();
+                } else {
+                    break; 
+                }
+            }
+        }
+
+        function drawGame() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < grid.length; i++) {
+                grid[i].draw();
+            }
+
+            let gx = goal.c * size + size * 0.2;
+            let gy = goal.r * size + size * 0.2;
+            ctx.fillStyle = "#0088ff"; 
+            ctx.beginPath();
+            ctx.rect(gx, gy, size * 0.6, size * 0.6);
+            ctx.fill();
+            ctx.shadowColor = "#0088ff";
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+
+            let px = player.c * size + size / 2;
+            let py = player.r * size + size / 2;
+            ctx.fillStyle = "#00ff00";
+            ctx.beginPath();
+            ctx.arc(px, py, size / 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                timerElement.innerText = (elapsed / 1000).toFixed(2) + "s";
+            }, 30);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function checkWin() {
+            if (player.c === goal.c && player.r === goal.r) {
+                isGameActive = false;
+                stopTimer();
+                let finalTime = (Date.now() - startTime) / 1000;
+                let formattedTime = finalTime.toFixed(2) + "s";
+                finalTimeText.innerText = "Your time: " + formattedTime;
+                modal.style.display = "flex";
+            }
+        }
+
+        function movePlayer(dc, dr) {
+            if (!isGameActive) return;
+
+            if (!hasStartedMoving) {
+                hasStartedMoving = true;
+                startTimer();
+            }
+
+            let currentCell = grid[index(player.c, player.r)];
+            let targetC = player.c + dc;
+            let targetR = player.r + dr;
+
+            if (targetC < 0 || targetC >= cols || targetR < 0 || targetR >= rows) return;
+            if (dr === -1 && currentCell.walls[0]) return;
+            if (dc === 1 && currentCell.walls[1]) return;
+            if (dr === 1 && currentCell.walls[2]) return;
+            if (dc === -1 && currentCell.walls[3]) return;
+
+            player.c = targetC;
+            player.r = targetR;
+            drawGame();
+            checkWin();
+        }
+
+        function toggleCustomInput() {
+            if (difficultySelect.value === 'custom') {
+                customInput.style.display = 'inline-block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                initGame(); // Auto restart if switching back to preset
+            }
+        }
+
+        function initGame() {
+            modal.style.display = "none";
+            timerElement.innerText = "0.00s";
+            document.activeElement.blur(); 
+            stopTimer();
+
+            // Determine Grid Size
+            let dim;
+            if (difficultySelect.value === 'custom') {
+                dim = parseInt(customInput.value);
+                // Safety Limits
+                if (isNaN(dim) || dim < 3) dim = 3;
+                if (dim > 100) dim = 100;
+                customInput.value = dim; // reflect clamped value
+            } else {
+                dim = parseInt(difficultySelect.value);
+            }
+            
+            cols = dim;
+            rows = dim;
+            size = canvas.width / cols;
+
+            player = { c: 0, r: 0 };
+            goal = { c: cols - 1, r: rows - 1 };
+            
+            isGameActive = true;
+            hasStartedMoving = false; 
+            
+            generateMaze();
+            drawGame();
+            
+            window.focus();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                initGame();
+                return;
+            }
+
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); break;
+                case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); break;
+                case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); break;
+                case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); break;
+            }
+        });
+
+        // Initialize
+        initGame();
+
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Maze Runner v4</title>
+    <style>
+        /* DARK THEME CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 { margin-bottom: 5px; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        .top-bar {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #1e1e1e;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffcc;
+            min-width: 90px;
+            text-align: right;
+        }
+
+        label { color: #aaa; font-weight: bold; font-size: 14px; }
+
+        select, button, input {
+            padding: 8px 12px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        /* Custom size input hidden by default */
+        #custom-size-input {
+            width: 60px;
+            display: none; 
+            border: 1px solid #007bff;
+        }
+
+        button {
+            background-color: #007bff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #0056b3; }
+
+        .game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border: 4px solid #444;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+
+        /* POP-UP MODAL STYLES */
+        #modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-title { font-size: 28px; margin-bottom: 10px; color: #28a745; }
+        .modal-time { font-size: 20px; margin-bottom: 20px; color: #fff; }
+        .modal-btn {
+            background-color: #28a745;
+            padding: 10px 25px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .modal-btn:hover { background-color: #218838; }
+        
+        .modal-hint { font-size: 12px; color: #888; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+        strong { color: #ddd; }
+    </style>
+</head>
+<body>
+
+    <h1>Maze Runner</h1>
+
+    <div class="top-bar">
+        <div>
+            <label for="difficulty">Size:</label>
+            <select id="difficulty" onchange="toggleCustomInput()">
+                <option value="5">Easy (5x5)</option>
+                <option value="10">Medium (10x10)</option>
+                <option value="20">Hard (20x20)</option>
+                <option value="30">Difficult (30x30)</option>
+                <option value="40">Insane (40x40)</option>
+                <option value="custom">Custom Size</option>
+            </select>
+            <input type="number" id="custom-size-input" placeholder="Size" min="3" max="100" value="50">
+        </div>
+        <div>
+            <label>Time:</label>
+            <span id="timer" class="timer-display">0.00s</span>
+        </div>
+        <button onclick="initGame()">Reset</button>
+    </div>
+
+    <div class="game-container">
+        <canvas id="mazeCanvas" width="600" height="600"></canvas>
+        
+        <div id="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">Maze Complete!</div>
+                <div class="modal-time" id="final-time-text">Your time: 0.00s</div>
+                <button class="modal-btn" onclick="initGame()">Continue</button>
+                <div class="modal-hint">Press <strong>Enter</strong> to restart</div>
+            </div>
+        </div>
+    </div>
+    
+    <p class="instructions">Move with <strong>Arrows/WASD</strong>. Reset with <strong>Enter</strong>.</p>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const difficultySelect = document.getElementById('difficulty');
+        const customInput = document.getElementById('custom-size-input');
+        const modal = document.getElementById('modal-overlay');
+        const finalTimeText = document.getElementById('final-time-text');
+        const timerElement = document.getElementById('timer');
+
+        let cols, rows;
+        let size;
+        let grid = [];
+        let stack = [];
+        let player = { c: 0, r: 0 };
+        let goal = { c: 0, r: 0 };
+        let isGameActive = false;
+        let hasStartedMoving = false;
+
+        let startTime = 0;
+        let timerInterval = null;
+
+        class Cell {
+            constructor(c, r) {
+                this.c = c;
+                this.r = r;
+                this.walls = [true, true, true, true]; // Top, Right, Bottom, Left
+                this.visited = false;
+            }
+
+            checkNeighbors() {
+                let neighbors = [];
+                let top = grid[index(this.c, this.r - 1)];
+                let right = grid[index(this.c + 1, this.r)];
+                let bottom = grid[index(this.c, this.r + 1)];
+                let left = grid[index(this.c - 1, this.r)];
+
+                if (top && !top.visited) neighbors.push(top);
+                if (right && !right.visited) neighbors.push(right);
+                if (bottom && !bottom.visited) neighbors.push(bottom);
+                if (left && !left.visited) neighbors.push(left);
+
+                if (neighbors.length > 0) {
+                    let r = Math.floor(Math.random() * neighbors.length);
+                    return neighbors[r];
+                }
+                return undefined;
+            }
+
+            draw() {
+                let x = this.c * size;
+                let y = this.r * size;
+
+                ctx.strokeStyle = "#ffffff"; 
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                if (this.walls[0]) { ctx.moveTo(x, y); ctx.lineTo(x + size, y); }
+                if (this.walls[1]) { ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size); }
+                if (this.walls[2]) { ctx.moveTo(x + size, y + size); ctx.lineTo(x, y + size); }
+                if (this.walls[3]) { ctx.moveTo(x, y + size); ctx.lineTo(x, y); }
+                ctx.stroke();
+            }
+        }
+
+        function index(c, r) {
+            if (c < 0 || r < 0 || c > cols - 1 || r > rows - 1) return -1;
+            return c + r * cols;
+        }
+
+        function removeWalls(a, b) {
+            let x = a.c - b.c;
+            if (x === 1) { a.walls[3] = false; b.walls[1] = false; }
+            else if (x === -1) { a.walls[1] = false; b.walls[3] = false; }
+            let y = a.r - b.r;
+            if (y === 1) { a.walls[0] = false; b.walls[2] = false; }
+            else if (y === -1) { a.walls[2] = false; b.walls[0] = false; }
+        }
+
+        function generateMaze() {
+            grid = [];
+            stack = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    grid.push(new Cell(c, r));
+                }
+            }
+            let current = grid[0];
+            current.visited = true;
+            let unvisitedCount = rows * cols - 1;
+
+            while (unvisitedCount > 0 || stack.length > 0) {
+                let next = current.checkNeighbors();
+                if (next) {
+                    next.visited = true;
+                    stack.push(current);
+                    removeWalls(current, next);
+                    current = next;
+                    unvisitedCount--;
+                } else if (stack.length > 0) {
+                    current = stack.pop();
+                } else {
+                    break; 
+                }
+            }
+        }
+
+        function drawGame() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < grid.length; i++) {
+                grid[i].draw();
+            }
+
+            let gx = goal.c * size + size * 0.2;
+            let gy = goal.r * size + size * 0.2;
+            ctx.fillStyle = "#0088ff"; 
+            ctx.beginPath();
+            ctx.rect(gx, gy, size * 0.6, size * 0.6);
+            ctx.fill();
+            ctx.shadowColor = "#0088ff";
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+
+            let px = player.c * size + size / 2;
+            let py = player.r * size + size / 2;
+            ctx.fillStyle = "#00ff00";
+            ctx.beginPath();
+            ctx.arc(px, py, size / 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                timerElement.innerText = (elapsed / 1000).toFixed(2) + "s";
+            }, 30);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function checkWin() {
+            if (player.c === goal.c && player.r === goal.r) {
+                isGameActive = false;
+                stopTimer();
+                let finalTime = (Date.now() - startTime) / 1000;
+                let formattedTime = finalTime.toFixed(2) + "s";
+                finalTimeText.innerText = "Your time: " + formattedTime;
+                modal.style.display = "flex";
+            }
+        }
+
+        function movePlayer(dc, dr) {
+            if (!isGameActive) return;
+
+            if (!hasStartedMoving) {
+                hasStartedMoving = true;
+                startTimer();
+            }
+
+            let currentCell = grid[index(player.c, player.r)];
+            let targetC = player.c + dc;
+            let targetR = player.r + dr;
+
+            if (targetC < 0 || targetC >= cols || targetR < 0 || targetR >= rows) return;
+            if (dr === -1 && currentCell.walls[0]) return;
+            if (dc === 1 && currentCell.walls[1]) return;
+            if (dr === 1 && currentCell.walls[2]) return;
+            if (dc === -1 && currentCell.walls[3]) return;
+
+            player.c = targetC;
+            player.r = targetR;
+            drawGame();
+            checkWin();
+        }
+
+        function toggleCustomInput() {
+            if (difficultySelect.value === 'custom') {
+                customInput.style.display = 'inline-block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                initGame(); // Auto restart if switching back to preset
+            }
+        }
+
+        function initGame() {
+            modal.style.display = "none";
+            timerElement.innerText = "0.00s";
+            document.activeElement.blur(); 
+            stopTimer();
+
+            // Determine Grid Size
+            let dim;
+            if (difficultySelect.value === 'custom') {
+                dim = parseInt(customInput.value);
+                // Safety Limits
+                if (isNaN(dim) || dim < 3) dim = 3;
+                if (dim > 100) dim = 100;
+                customInput.value = dim; // reflect clamped value
+            } else {
+                dim = parseInt(difficultySelect.value);
+            }
+            
+            cols = dim;
+            rows = dim;
+            size = canvas.width / cols;
+
+            player = { c: 0, r: 0 };
+            goal = { c: cols - 1, r: rows - 1 };
+            
+            isGameActive = true;
+            hasStartedMoving = false; 
+            
+            generateMaze();
+            drawGame();
+            
+            window.focus();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                initGame();
+                return;
+            }
+
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); break;
+                case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); break;
+                case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); break;
+                case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); break;
+            }
+        });
+
+        // Initialize
+        initGame();
+
+    </script>
+</body>
+</html>
