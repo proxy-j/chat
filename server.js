@@ -321,6 +321,19 @@ function handlePrivateChatRequest(ws, data) {
     return;
   }
 
+  // Check if chat already exists between these users
+  for (const [chatId, participants] of privateChatParticipants.entries()) {
+    if (participants.includes(user.uuid) && participants.includes(target.user.uuid)) {
+      // Chat already exists, send it to requester
+      ws.send(JSON.stringify({
+        type: 'privateChatAccepted',
+        chatId,
+        with: data.targetUsername
+      }));
+      return;
+    }
+  }
+
   // Send request to target
   target.ws.send(JSON.stringify({
     type: 'privateChatRequest',
@@ -337,6 +350,76 @@ function handlePrivateChatResponse(ws, data) {
   if (!requester) return;
 
   if (data.accepted) {
+    // Check if chat already exists
+    for (const [chatId, participants] of privateChatParticipants.entries()) {
+      if (participants.includes(user.uuid) && participants.includes(requester.user.uuid)) {
+        // Chat already exists, just notify both users
+        ws.send(JSON.stringify({
+          type: 'privateChatAccepted',
+          chatId,
+          with: data.from
+        }));
+
+        requester.ws.send(JSON.stringify({
+          type: 'privateChatAccepted',
+          chatId,
+          with: user.username
+        }));
+        return;
+      }
+    }
+
+    // Create new chat
+    const chatId = generateId();
+    privateChatParticipants.set(chatId, [user.uuid, requester.user.uuid]);
+    privateChats.set(chatId, []);
+
+    // Notify both users
+    ws.send(JSON.stringify({
+      type: 'privateChatAccepted',
+      chatId,
+      with: data.from
+    }));
+
+    requester.ws.send(JSON.stringify({
+      type: 'privateChatAccepted',
+      chatId,
+      with: user.username
+    }));
+  } else {
+    requester.ws.send(JSON.stringify({
+      type: 'privateChatRejected',
+      by: user.username
+    }));
+  }
+}function handlePrivateChatResponse(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  const requester = getOnlineUserByUsername(data.from);
+  if (!requester) return;
+
+  if (data.accepted) {
+    // Check if chat already exists
+    for (const [chatId, participants] of privateChatParticipants.entries()) {
+      if (participants.includes(user.uuid) && participants.includes(requester.user.uuid)) {
+        // Chat already exists, just notify both users
+        ws.send(JSON.stringify({
+          type: 'privateChatAccepted',
+          chatId,
+          with: data.from
+        }));
+
+        requester.ws.send(JSON.stringify({
+          type: 'privateChatAccepted',
+          chatId,
+          with: user.username
+        }));
+        return;
+      }
+    }
+
+    // Create new chat
     const chatId = generateId();
     privateChatParticipants.set(chatId, [user.uuid, requester.user.uuid]);
     privateChats.set(chatId, []);
@@ -360,7 +443,6 @@ function handlePrivateChatResponse(ws, data) {
     }));
   }
 }
-
 function handleGetHistory(ws, data) {
   const user = connections.get(ws);
   if (!user) return;
