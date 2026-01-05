@@ -6,32 +6,44 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Parse JSON bodies
+app.use(express.json({ limit: '10mb' }));
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`HTTP: http://localhost:${PORT}`);
+  console.log(`WebSocket ready for connections`);
 });
 
 const wss = new WebSocket.Server({ server });
 
 // Data structures
-const users = new Map(); // uuid -> user data
-const connections = new Map(); // ws -> user data
+const users = new Map();
+const connections = new Map();
 const channels = {
-  announcements: [],
   general: [],
   gaming: [],
   memes: []
 };
-const privateChats = new Map(); // chatId -> messages array
-const privateChatParticipants = new Map(); // chatId -> [uuid1, uuid2]
+const privateChats = new Map();
+const privateChatParticipants = new Map();
 const bannedUsers = new Set();
 const bannedIPs = new Set();
-const userWarnings = new Map(); // uuid -> count
+const userWarnings = new Map();
 const slowMode = { enabled: false, duration: 5 };
-const messageTimestamps = new Map(); // uuid -> last message timestamp
+const messageTimestamps = new Map();
+const voiceChannels = {
+  general: new Set(),
+  chill: new Set(),
+  gaming: new Set()
+};
+// ADD THIS LINE - this was missing!
+const userProfiles = new Map();
 
+// Rest of your code remains the same...
 // Passwords
 const PASSWORDS = {
   owner: '10owna12',
@@ -101,9 +113,10 @@ function canModerate(moderator, target) {
 // WebSocket connection handler
 wss.on('connection', (ws, req) => {
   const clientIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+  console.log(`New WebSocket connection from ${clientIP}`);
 
-  // Check IP ban
   if (bannedIPs.has(clientIP)) {
+    console.log(`Rejected banned IP: ${clientIP}`);
     ws.send(JSON.stringify({
       type: 'banned',
       message: 'You are banned from this server (IP ban)'
@@ -115,6 +128,7 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
+      console.log(`Received message type: ${data.type} from ${clientIP}`);
       handleMessage(ws, data, clientIP);
     } catch (error) {
       console.error('Error handling message:', error);
@@ -125,9 +139,32 @@ wss.on('connection', (ws, req) => {
   ws.on('close', () => {
     const user = connections.get(ws);
     if (user) {
+      console.log(`User disconnected: ${user.username}`);
+      
+      // Remove from all voice channels
+      Object.keys(voiceChannels).forEach(channel => {
+        if (voiceChannels[channel].has(user.username)) {
+          voiceChannels[channel].delete(user.username);
+          broadcast({
+            type: 'voiceUserLeft',
+            username: user.username,
+            channel
+          });
+          broadcast({
+            type: 'voiceUsers',
+            users: Array.from(voiceChannels[channel]),
+            channel
+          });
+        }
+      });
+      
       connections.delete(ws);
       broadcast({ type: 'userList', users: getUserList() });
     }
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
   });
 });
 
@@ -144,6 +181,16 @@ function handleMessage(ws, data, clientIP) {
     removeReaction: handleRemoveReaction,
     typing: handleTyping,
     
+    // Voice channel
+    joinVoice: handleJoinVoice,
+    leaveVoice: handleLeaveVoice,
+    voiceOffer: handleVoiceOffer,
+    voiceAnswer: handleVoiceAnswer,
+    voiceIceCandidate: handleVoiceIceCandidate,
+    
+    // Profile
+    updateProfile: handleUpdateProfile,
+    
     // Admin commands
     adminKick: handleAdminKick,
     adminTimeout: handleAdminTimeout,
@@ -157,8 +204,6 @@ function handleMessage(ws, data, clientIP) {
     adminBroadcast: handleAdminBroadcast,
     adminSlowMode: handleAdminSlowMode,
     adminClearChat: handleAdminClearChat,
-    
-    // Admin troll commands
     adminSpinScreen: (ws, data) => handleAdminEffect(ws, data, 'spinScreen'),
     adminShakeScreen: (ws, data) => handleAdminEffect(ws, data, 'shakeScreen'),
     adminFlipScreen: (ws, data) => handleAdminEffect(ws, data, 'flipScreen'),
@@ -169,10 +214,7 @@ function handleMessage(ws, data, clientIP) {
     adminEmojiSpam: (ws, data) => handleAdminEffect(ws, data, 'emojiSpam'),
     adminConfetti: handleAdminConfettiAll,
     adminRickRoll: (ws, data) => handleAdminEffect(ws, data, 'rickRoll'),
-    adminForceDisconnect: handleAdminForceDisconnect,
-    
-    // Owner commands
-    ownerAnnouncement: handleOwnerAnnouncement
+    adminForceDisconnect: handleAdminForceDisconnect
   };
 
   const handler = handlers[data.type];
@@ -182,7 +224,6 @@ function handleMessage(ws, data, clientIP) {
 }
 
 function handleJoin(ws, data, clientIP) {
-  // Check username ban
   if (bannedUsers.has(data.username)) {
     ws.send(JSON.stringify({
       type: 'banned',
@@ -192,10 +233,8 @@ function handleJoin(ws, data, clientIP) {
     return;
   }
 
-  // Generate or retrieve UUID
   let uuid = data.uuid || generateId();
   
-  // Determine role
   let isOwner = false;
   let isAdmin = false;
   let isVIP = false;
@@ -209,7 +248,6 @@ function handleJoin(ws, data, clientIP) {
     isVIP = true;
   }
 
-  // Store user
   const user = {
     uuid,
     username: data.username,
@@ -222,7 +260,6 @@ function handleJoin(ws, data, clientIP) {
   connections.set(ws, user);
   users.set(uuid, user);
 
-  // Send joined confirmation
   ws.send(JSON.stringify({
     type: 'joined',
     uuid,
@@ -231,7 +268,6 @@ function handleJoin(ws, data, clientIP) {
     isVIP
   }));
 
-  // Broadcast updated user list
   broadcast({ type: 'userList', users: getUserList() });
 }
 
@@ -239,7 +275,6 @@ function handleChannelMessage(ws, data) {
   const user = connections.get(ws);
   if (!user) return;
 
-  // Check slow mode
   if (slowMode.enabled) {
     const lastMsg = messageTimestamps.get(user.uuid);
     if (lastMsg && Date.now() - lastMsg < slowMode.duration * 1000) {
@@ -253,6 +288,7 @@ function handleChannelMessage(ws, data) {
 
   messageTimestamps.set(user.uuid, Date.now());
 
+  const profile = userProfiles.get(user.username) || {};
   const message = {
     id: generateId(),
     author: user.username,
@@ -263,13 +299,14 @@ function handleChannelMessage(ws, data) {
     isAdmin: user.isAdmin,
     isVIP: user.isVIP,
     replyTo: data.replyTo || null,
-    reactions: {}
+    reactions: {},
+    imageUrl: data.imageUrl || null,
+    profileColor: profile.profileColor || 'default'
   };
 
   if (channels[data.channel]) {
     channels[data.channel].push(message);
     
-    // Keep only last 100 messages per channel
     if (channels[data.channel].length > 100) {
       channels[data.channel].shift();
     }
@@ -282,6 +319,7 @@ function handlePrivateMessage(ws, data) {
   const user = connections.get(ws);
   if (!user) return;
 
+  const profile = userProfiles.get(user.username) || {};
   const message = {
     id: generateId(),
     author: user.username,
@@ -292,7 +330,9 @@ function handlePrivateMessage(ws, data) {
     isAdmin: user.isAdmin,
     isVIP: user.isVIP,
     replyTo: data.replyTo || null,
-    reactions: {}
+    reactions: {},
+    imageUrl: data.imageUrl || null,
+    profileColor: profile.profileColor || 'default'
   };
 
   if (!privateChats.has(data.chatId)) {
@@ -301,7 +341,6 @@ function handlePrivateMessage(ws, data) {
 
   privateChats.get(data.chatId).push(message);
 
-  // Send to both participants
   const participants = privateChatParticipants.get(data.chatId);
   if (participants) {
     sendToUsers(participants, { type: 'privateMessage', message });
@@ -324,17 +363,23 @@ function handlePrivateChatRequest(ws, data) {
   // Check if chat already exists between these users
   for (const [chatId, participants] of privateChatParticipants.entries()) {
     if (participants.includes(user.uuid) && participants.includes(target.user.uuid)) {
-      // Chat already exists, send it to requester
+      // Chat already exists, notify both users
       ws.send(JSON.stringify({
         type: 'privateChatAccepted',
         chatId,
         with: data.targetUsername
       }));
+
+      target.ws.send(JSON.stringify({
+        type: 'privateChatAccepted',
+        chatId,
+        with: user.username
+      }));
       return;
     }
   }
 
-  // Send request to target
+  // No existing chat, send request to target
   target.ws.send(JSON.stringify({
     type: 'privateChatRequest',
     from: user.username,
@@ -350,10 +395,8 @@ function handlePrivateChatResponse(ws, data) {
   if (!requester) return;
 
   if (data.accepted) {
-    // Check if chat already exists
     for (const [chatId, participants] of privateChatParticipants.entries()) {
       if (participants.includes(user.uuid) && participants.includes(requester.user.uuid)) {
-        // Chat already exists, just notify both users
         ws.send(JSON.stringify({
           type: 'privateChatAccepted',
           chatId,
@@ -369,62 +412,10 @@ function handlePrivateChatResponse(ws, data) {
       }
     }
 
-    // Create new chat
     const chatId = generateId();
     privateChatParticipants.set(chatId, [user.uuid, requester.user.uuid]);
     privateChats.set(chatId, []);
 
-    // Notify both users
-    ws.send(JSON.stringify({
-      type: 'privateChatAccepted',
-      chatId,
-      with: data.from
-    }));
-
-    requester.ws.send(JSON.stringify({
-      type: 'privateChatAccepted',
-      chatId,
-      with: user.username
-    }));
-  } else {
-    requester.ws.send(JSON.stringify({
-      type: 'privateChatRejected',
-      by: user.username
-    }));
-  }
-}function handlePrivateChatResponse(ws, data) {
-  const user = connections.get(ws);
-  if (!user) return;
-
-  const requester = getOnlineUserByUsername(data.from);
-  if (!requester) return;
-
-  if (data.accepted) {
-    // Check if chat already exists
-    for (const [chatId, participants] of privateChatParticipants.entries()) {
-      if (participants.includes(user.uuid) && participants.includes(requester.user.uuid)) {
-        // Chat already exists, just notify both users
-        ws.send(JSON.stringify({
-          type: 'privateChatAccepted',
-          chatId,
-          with: data.from
-        }));
-
-        requester.ws.send(JSON.stringify({
-          type: 'privateChatAccepted',
-          chatId,
-          with: user.username
-        }));
-        return;
-      }
-    }
-
-    // Create new chat
-    const chatId = generateId();
-    privateChatParticipants.set(chatId, [user.uuid, requester.user.uuid]);
-    privateChats.set(chatId, []);
-
-    // Notify both users
     ws.send(JSON.stringify({
       type: 'privateChatAccepted',
       chatId,
@@ -443,6 +434,7 @@ function handlePrivateChatResponse(ws, data) {
     }));
   }
 }
+
 function handleGetHistory(ws, data) {
   const user = connections.get(ws);
   if (!user) return;
@@ -556,7 +548,107 @@ function handleTyping(ws, data) {
   }, ws);
 }
 
-// Admin commands
+function handleUpdateProfile(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  userProfiles.set(user.username, {
+    profileColor: data.profileColor || 'default'
+  });
+
+  console.log(`${user.username} updated profile color to ${data.profileColor}`);
+}
+
+// Voice channel handlers
+function handleJoinVoice(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  const channel = data.channel || 'general';
+  if (!voiceChannels[channel]) return;
+
+  voiceChannels[channel].add(user.username);
+  
+  // Notify all users of updated voice channel
+  broadcast({
+    type: 'voiceUsers',
+    users: Array.from(voiceChannels[channel]),
+    channel
+  });
+  
+  console.log(`${user.username} joined voice channel: ${channel}`);
+}
+
+function handleLeaveVoice(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  const channel = data.channel || 'general';
+  if (!voiceChannels[channel]) return;
+
+  voiceChannels[channel].delete(user.username);
+  
+  // Notify all users
+  broadcast({
+    type: 'voiceUserLeft',
+    username: user.username,
+    channel
+  });
+  
+  broadcast({
+    type: 'voiceUsers',
+    users: Array.from(voiceChannels[channel]),
+    channel
+  });
+  
+  console.log(`${user.username} left voice channel: ${channel}`);
+}
+
+function handleVoiceOffer(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  const target = getOnlineUserByUsername(data.to);
+  if (target) {
+    target.ws.send(JSON.stringify({
+      type: 'voiceOffer',
+      from: user.username,
+      offer: data.offer,
+      channel: data.channel
+    }));
+  }
+}
+
+function handleVoiceAnswer(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  const target = getOnlineUserByUsername(data.to);
+  if (target) {
+    target.ws.send(JSON.stringify({
+      type: 'voiceAnswer',
+      from: user.username,
+      answer: data.answer,
+      channel: data.channel
+    }));
+  }
+}
+
+function handleVoiceIceCandidate(ws, data) {
+  const user = connections.get(ws);
+  if (!user) return;
+
+  const target = getOnlineUserByUsername(data.to);
+  if (target) {
+    target.ws.send(JSON.stringify({
+      type: 'voiceIceCandidate',
+      from: user.username,
+      candidate: data.candidate
+    }));
+  }
+}
+
+// Admin command handlers
 function handleAdminKick(ws, data) {
   const admin = connections.get(ws);
   if (!admin || (!admin.isAdmin && !admin.isOwner)) return;
@@ -626,7 +718,6 @@ function handleAdminBan(ws, data) {
     return;
   }
 
-  // Apply ban based on type
   if (data.banType === 'username' || data.banType === 'both') {
     bannedUsers.add(data.targetUsername);
   }
@@ -857,33 +948,6 @@ function handleAdminForceDisconnect(ws, data) {
   ws.send(JSON.stringify({
     type: 'adminActionSuccess',
     message: `Disconnected ${data.targetUsername}`
-  }));
-}
-
-function handleOwnerAnnouncement(ws, data) {
-  const owner = connections.get(ws);
-  if (!owner || !owner.isOwner) return;
-
-  const message = {
-    id: generateId(),
-    author: 'ANNOUNCEMENT',
-    text: data.text,
-    channel: 'announcements',
-    timestamp: Date.now(),
-    isSystem: true,
-    reactions: {}
-  };
-
-  channels.announcements.push(message);
-
-  broadcast({
-    type: 'announcement',
-    message
-  });
-
-  ws.send(JSON.stringify({
-    type: 'adminActionSuccess',
-    message: 'Announcement posted'
   }));
 }
 
