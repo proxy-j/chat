@@ -9,6 +9,32 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;height:100vh;overflow:hidden;background:#36393f}
+body.light-theme{background:#fff}
+body.light-theme .sidebar,body.light-theme .sidebar.right,body.light-theme .main-content{background:#fff}
+body.light-theme .server-header,body.light-theme .user-area{background:#f2f3f5;border-bottom-color:#e3e5e8}
+body.light-theme .channel,body.light-theme .user-item,body.light-theme .voice-channel{color:#4f5660}
+body.light-theme .channel:hover,body.light-theme .user-item:hover,body.light-theme .voice-channel:hover{background:#e3e5e8;color:#060607}
+body.light-theme .channel.active,body.light-theme .voice-channel.active{background:#5865f2;color:#fff}
+body.light-theme .section-header{color:#4f5660}
+body.light-theme .chat-header{background:#fff;border-bottom-color:#e3e5e8;color:#060607}
+body.light-theme .messages{background:#fff}
+body.light-theme .message:hover{background:rgba(0,0,0,.05)}
+body.light-theme .msg-author.normal{color:#060607}
+body.light-theme .msg-text{color:#2e3338}
+body.light-theme .msg-time{color:#5c5e66}
+body.light-theme .input-area{background:#fff}
+body.light-theme .input-wrapper,body.light-theme .reply-bar{background:#ebedef}
+body.light-theme .msg-input{color:#2e3338}
+body.light-theme .msg-input::placeholder{color:#5c5e66}
+body.light-theme #adminPanel,body.light-theme #settingsPanel{background:#fff;border-color:#e3e5e8}
+body.light-theme .ap-header,body.light-theme .settings-header{background:#5865f2}
+body.light-theme .ap-content,body.light-theme .settings-content{background:#fff}
+body.light-theme .form-input,body.light-theme .form-select{background:#ebedef;border-color:#e3e5e8;color:#2e3338}
+body.light-theme .ap-user{background:#ebedef}
+body.light-theme .ap-user-name{color:#2e3338}
+body.light-theme .notif{background:#fff;border-color:#e3e5e8}
+body.light-theme .notif-title{color:#060607}
+body.light-theme .notif-body{color:#2e3338}
 .container{display:flex;height:100vh}
 .sidebar{width:240px;background:#2f3136;display:flex;flex-direction:column}
 .sidebar.right{order:3;border-left:1px solid #202225;transition:transform .3s}
@@ -32,6 +58,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 .close-dm{opacity:0;background:none;border:none;color:#96989d;cursor:pointer;font-size:16px;transition:opacity .2s}
 .channel:hover .close-dm{opacity:1}
 .close-dm:hover{color:#ed4245}
+.voice-section{margin-top:16px;padding-top:16px;border-top:1px solid #202225}
+.voice-channel{padding:8px 12px;margin:2px 0;border-radius:4px;color:#96989d;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:14px;transition:all .15s}
+.voice-channel:hover{background:#3a3c42;color:#dcddde}
+.voice-channel.active{background:#404249;color:#fff}
+.voice-channel-name{display:flex;align-items:center}
+.voice-status{font-size:11px;color:#3ba55d}
+.voice-controls{display:none;gap:4px;margin-top:8px;padding:0 12px}
+.voice-btn{flex:1;padding:6px;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;color:#fff}
+.voice-btn.leave{background:#ed4245}
+.voice-btn.leave:hover{background:#c93b3e}
+.voice-btn.mute{background:#5865f2}
+.voice-btn.mute:hover{background:#4752c4}
+.voice-btn.mute.active{background:#faa61a}
+.voice-participants{margin-top:8px;display:none}
+.voice-participants.show{display:block}
+.voice-participant{padding:4px 8px;font-size:12px;color:#dcddde;display:flex;align-items:center;gap:6px}
+.voice-participant::before{content:'👤';font-size:10px}
+.voice-participant.speaking::before{content:'🎤';animation:pulse 1s infinite}
+.voice-icon{width:16px;height:16px;margin-right:6px;fill:currentColor;flex-shrink:0}
 .users-section{flex:1;overflow-y:auto;padding:8px}
 .users-section-header{padding:8px 12px;color:#96989d;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .online-count{color:#3ba55d;font-size:11px}
@@ -50,7 +95,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 .role-badge.vip{background:linear-gradient(135deg,#f47fff,#ff6ec7)}
 .dm-btn{opacity:0;background:#5865f2;color:#fff;border:none;padding:3px 8px;border-radius:3px;font-size:10px;cursor:pointer;transition:opacity .2s}
 .user-item:hover .dm-btn{opacity:1}
-.user-area{height:52px;background:#292b2f;padding:0 8px;display:flex;align-items:center;cursor:pointer;transition:background .2s;position:relative}
+.user-area{height:52px;background:#292b2f;padding:0 8px;display:flex;align-items:center;cursor:pointer;transition:background .2s;position:relative;gap:8px}
 .user-area:hover{background:#2a2d31}
 .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:8px;font-size:14px;position:relative}
 .notif-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#ed4245;border:2px solid #292b2f;border-radius:50%;animation:pulse 2s infinite;display:none}
@@ -61,9 +106,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 .avatar-badge.owner{background:#e74c3c}
 .avatar-badge.admin{background:#faa61a}
 .avatar-badge.vip{background:#f47fff}
-.user-display-name{color:#fff;font-size:14px;font-weight:500}
-.conn-status{width:8px;height:8px;border-radius:50%;background:#ed4245;margin-left:auto;transition:background .3s}
+.user-display-name{color:#fff;font-size:14px;font-weight:500;flex:1}
+.conn-status{width:8px;height:8px;border-radius:50%;background:#ed4245;transition:background .3s}
 .conn-status.online{background:#3ba55d}
+.notif-toggle{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;padding:4px;border-radius:4px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.notif-toggle:hover{background:#3a3c42;color:#fff}
+.notif-toggle.active{color:#3ba55d}
+.settings-btn{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;padding:4px;border-radius:4px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.settings-btn:hover{background:#3a3c42;color:#fff}
+#settingsPanel{position:fixed;bottom:60px;left:8px;width:400px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+#settingsPanel.show{display:flex}
+.settings-header{padding:12px 16px;border-bottom:1px solid #202225;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.settings-title{color:#fff;font-weight:600;font-size:14px}
+.settings-close{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;transition:color .2s}
+.settings-close:hover{color:#fff}
+.settings-content{flex:1;overflow-y:auto;padding:12px;min-height:0}
+.settings-section{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #202225}
+.settings-section:last-child{border-bottom:none}
+.settings-section-title{color:#fff;font-size:13px;font-weight:600;margin-bottom:12px;text-transform:uppercase}
+.settings-option{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.settings-option-label{color:#dcddde;font-size:13px}
+.settings-option-desc{color:#96989d;font-size:11px;margin-top:2px}
+.settings-toggle{width:40px;height:20px;background:#72767d;border-radius:10px;position:relative;cursor:pointer;transition:background .2s}
+.settings-toggle.active{background:#3ba55d}
+.settings-toggle-slider{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.settings-toggle.active .settings-toggle-slider{transform:translateX(20px)}
+.color-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.color-option{width:40px;height:40px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .2s;position:relative}
+.color-option:hover{transform:scale(1.1)}
+.color-option.selected{border-color:#5865f2}
+.color-option.selected::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:18px}
+.color-default{background:linear-gradient(135deg,#667eea,#764ba2)}
+.color-red{background:linear-gradient(135deg,#ff6b6b,#ee5a6f)}
+.color-orange{background:linear-gradient(135deg,#ffa500,#ff8c00)}
+.color-yellow{background:linear-gradient(135deg,#ffd93d,#fcbf49)}
+.color-green{background:linear-gradient(135deg,#51cf66,#37b24d)}
+.color-blue{background:linear-gradient(135deg,#4dabf7,#3b5bdb)}
+.color-purple{background:linear-gradient(135deg,#9775fa,#7950f2)}
+.color-pink{background:linear-gradient(135deg,#ff6ec7,#f783ac)}
 .main-content{flex:1;display:flex;flex-direction:column;background:#36393f}
 .chat-header{height:48px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #202225;color:#fff}
 .current-channel{font-weight:600;font-size:16px}
@@ -73,6 +153,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 .message{display:flex;padding:4px 0;margin-bottom:8px;position:relative;transition:background .15s}
 .message:hover{background:rgba(0,0,0,.1);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;border-radius:4px}
 .msg-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:16px;flex-shrink:0}
+.msg-avatar.color-red{background:linear-gradient(135deg,#ff6b6b,#ee5a6f)}
+.msg-avatar.color-orange{background:linear-gradient(135deg,#ffa500,#ff8c00)}
+.msg-avatar.color-yellow{background:linear-gradient(135deg,#ffd93d,#fcbf49)}
+.msg-avatar.color-green{background:linear-gradient(135deg,#51cf66,#37b24d)}
+.msg-avatar.color-blue{background:linear-gradient(135deg,#4dabf7,#3b5bdb)}
+.msg-avatar.color-purple{background:linear-gradient(135deg,#9775fa,#7950f2)}
+.msg-avatar.color-pink{background:linear-gradient(135deg,#ff6ec7,#f783ac)}
 .msg-content{flex:1;min-width:0}
 .msg-header{display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap}
 .msg-author{font-weight:500;font-size:15px}
@@ -82,6 +169,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 .msg-author.normal{color:#fff}
 .msg-time{color:#72767d;font-size:12px}
 .msg-text{color:#dcddde;font-size:15px;line-height:1.4;word-wrap:break-word;white-space:pre-wrap}
+.message.grouped{margin-top:0;padding-top:0}
+.message.grouped .msg-avatar,.message.grouped .msg-header{display:none}
+.message.grouped .msg-content{margin-left:56px}
+.msg-image{max-width:400px;max-height:300px;border-radius:8px;margin-top:8px;cursor:pointer;transition:transform .2s}
+.msg-image:hover{transform:scale(1.02)}
 .msg-reply{background:#2f3136;border-left:3px solid #5865f2;padding:4px 8px;margin-bottom:4px;border-radius:0 4px 4px 0;font-size:13px;color:#96989d}
 .msg-reply-author{color:#5865f2;font-weight:500}
 .msg-actions{position:absolute;right:8px;top:-8px;background:#2f3136;border-radius:4px;display:none;box-shadow:0 2px 8px rgba(0,0,0,.4)}
@@ -104,13 +196,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 .reply-bar-text{color:#dcddde;font-size:13px}
 .reply-bar-close{background:none;border:none;color:#96989d;cursor:pointer;font-size:18px;transition:color .2s}
 .reply-bar-close:hover{color:#fff}
-.input-wrapper{background:#40444b;border-radius:8px;padding:12px;display:flex;align-items:center}
+.input-wrapper{background:#40444b;border-radius:8px;padding:12px;display:flex;align-items:center;gap:8px}
 .reply-bar.show+.input-wrapper{border-radius:0 0 8px 8px}
 .msg-input{flex:1;background:none;border:none;color:#dcddde;font-size:15px;outline:none}
 .msg-input::placeholder{color:#72767d}
-.send-btn{background:#5865f2;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:500;margin-left:8px;transition:background .2s}
+.input-btn{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;padding:4px 8px;border-radius:4px;transition:all .2s}
+.input-btn:hover{background:#3a3c42;color:#fff}
+.input-btn:disabled{opacity:.5;cursor:not-allowed}
+.send-btn{background:#5865f2;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:500;transition:background .2s}
 .send-btn:hover{background:#4752c4}
 .send-btn:disabled{background:#4e5058;cursor:not-allowed}
+.image-input{display:none}
+.image-preview{position:relative;display:inline-block;margin-right:8px}
+.image-preview img{max-width:80px;max-height:80px;border-radius:4px}
+.image-preview-close{position:absolute;top:-6px;right:-6px;background:#ed4245;color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
 .notifs{position:fixed;top:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;max-width:380px;pointer-events:none}
 .notifs>*{pointer-events:all}
 .notif{background:#2f3136;border:1px solid #202225;border-radius:8px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.4);animation:slideIn .3s}
@@ -133,9 +232,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 @keyframes glow{0%,100%{text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3)}50%{text-shadow:0 0 30px rgba(88,101,242,.7),0 0 60px rgba(88,101,242,.5)}}
 #loginCard{width:320px;background:#2f3136;border:1px solid #202225;border-radius:8px;padding:24px;color:#fff;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 #loginCard h2{margin-bottom:16px;font-size:20px}
-#pwdInput{width:100%;padding:12px;border-radius:6px;border:none;background:#40444b;color:#fff;font-size:14px;transition:box-shadow .2s}
-#pwdInput:focus{outline:none;box-shadow:0 0 0 2px #5865f2}
-#loginBtn{width:100%;margin-top:12px;padding:12px;border:none;border-radius:6px;background:#5865f2;color:#fff;cursor:pointer;font-weight:600;font-size:14px;transition:background .2s}
+#usernameInput,#pwdInput{width:100%;padding:12px;border-radius:6px;border:none;background:#40444b;color:#fff;font-size:14px;transition:box-shadow .2s;margin-bottom:12px}
+#usernameInput:focus,#pwdInput:focus{outline:none;box-shadow:0 0 0 2px #5865f2}
+#loginBtn{width:100%;margin-top:0;padding:12px;border:none;border-radius:6px;background:#5865f2;color:#fff;cursor:pointer;font-weight:600;font-size:14px;transition:background .2s}
 #loginBtn:hover{background:#4752c4}
 .guest-login{margin-top:16px;color:#5865f2;font-size:13px;cursor:pointer;transition:all .2s;text-decoration:underline;text-underline-offset:2px}
 .guest-login:hover{color:#7289da;transform:translateY(-1px)}
@@ -211,15 +310,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 @keyframes rainbow{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
 .confetti{position:fixed;width:10px;height:10px;pointer-events:none;z-index:9999;animation:fall 3s linear forwards}
 @keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.image-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;display:none;align-items:center;justify-content:center;cursor:pointer}
+.image-modal.show{display:flex}
+.image-modal img{max-width:90vw;max-height:90vh;border-radius:8px}
 </style>
 </head>
 <body>
 <div id="loginOverlay">
 <div class="login-title">The Chet</div>
 <div id="loginCard">
-<h2>Enter Password</h2>
-<input type="password" id="pwdInput" placeholder="Password">
-<button id="loginBtn">Login</button>
+<h2>Welcome to The Chet</h2>
+<input type="text" id="usernameInput" placeholder="Username" maxlength="30">
+<input type="password" id="pwdInput" placeholder="Password (optional)">
+<button id="loginBtn">Join</button>
 <div class="guest-login" id="guestLogin">or continue as Guest</div>
 <div id="loginError"></div>
 </div>
@@ -234,6 +337,98 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 <button class="modal-close" id="closeHelp">×</button>
 </div>
 <div class="modal-body" id="helpContent"></div>
+</div>
+</div>
+
+<div class="image-modal" id="imageModal">
+<img src="" alt="Full size image">
+</div>
+
+<div id="settingsPanel">
+<div class="settings-header">
+<div class="settings-title">⚙️ Settings</div>
+<button class="settings-close" id="closeSettings">×</button>
+</div>
+<div class="settings-content">
+<div class="settings-section">
+<div class="settings-section-title">Notifications</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">Off</div>
+<div class="settings-option-desc">Disable all notifications</div>
+</div>
+<div class="settings-toggle" id="notifOffToggle">
+<div class="settings-toggle-slider"></div>
+</div>
+</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">DM Notifications Only</div>
+<div class="settings-option-desc">Only notify for direct messages</div>
+</div>
+<div class="settings-toggle" id="notifDMToggle">
+<div class="settings-toggle-slider"></div>
+</div>
+</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">All Notifications</div>
+<div class="settings-option-desc">Notify for all messages</div>
+</div>
+<div class="settings-toggle active" id="notifAllToggle">
+<div class="settings-toggle-slider"></div>
+</div>
+</div>
+</div>
+
+<div class="settings-section">
+<div class="settings-section-title">Profile Color</div>
+<div class="color-picker">
+<div class="color-option color-default selected" data-color="default"></div>
+<div class="color-option color-red" data-color="red"></div>
+<div class="color-option color-orange" data-color="orange"></div>
+<div class="color-option color-yellow" data-color="yellow"></div>
+<div class="color-option color-green" data-color="green"></div>
+<div class="color-option color-blue" data-color="blue"></div>
+<div class="color-option color-purple" data-color="purple"></div>
+<div class="color-option color-pink" data-color="pink"></div>
+</div>
+</div>
+
+<div class="settings-section">
+<div class="settings-section-title">Chat Features</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">Profanity Filter</div>
+<div class="settings-option-desc">Replace bad words with asterisks</div>
+</div>
+<div class="settings-toggle" id="profanityToggle">
+<div class="settings-toggle-slider"></div>
+</div>
+</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">Group Messages</div>
+<div class="settings-option-desc">Combine consecutive messages from same user</div>
+</div>
+<div class="settings-toggle" id="groupingToggle">
+<div class="settings-toggle-slider"></div>
+</div>
+</div>
+</div>
+
+<div class="settings-section">
+<div class="settings-section-title">Appearance</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">Light Theme</div>
+<div class="settings-option-desc">Switch to light mode</div>
+</div>
+<div class="settings-toggle" id="themeToggle">
+<div class="settings-toggle-slider"></div>
+</div>
+</div>
+</div>
 </div>
 </div>
 
@@ -288,503 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;h
 <select class="form-select" id="trollUser"></select>
 </div>
 <div class="troll-grid">
-<button class="troll-btn danger" data-troll="forceDisconnect">🔌 DC</button>
-<button class="troll-btn success" id="confettiAll">🎊 All</button>
-</div>
-<div class="form-group">
-<label class="form-label">Server Broadcast</label>
-<input type="text" class="form-input" id="broadcastMsg" placeholder="Announcement message...">
-</div>
-<button class="btn btn-primary" id="sendBroadcast">📢 Broadcast to All</button>
-</div>
-<div class="ap-section" data-section="bans">
-<div class="form-label">Banned Usernames</div>
-<div class="ban-list" id="bannedUsers"></div>
-<div class="form-label">Banned IP Addresses</div>
-<div class="ban-list" id="bannedIPs"></div>
-<button class="btn btn-primary" id="refreshBans">🔄 Refresh Lists</button>
-</div>
-<div class="ap-section" data-section="settings">
-<div class="form-group">
-<label class="form-label">Slow Mode Duration (seconds)</label>
-<input type="number" class="form-input" id="slowDur" value="5">
-</div>
-<div class="form-group">
-<label style="color:#dcddde;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px">
-<input type="checkbox" id="slowEnabled"> Enable Slow Mode
-</label>
-</div>
-<button class="btn btn-primary" id="applySlowMode">Apply Slow Mode</button>
-<div class="form-group" style="margin-top:16px">
-<label class="form-label">Clear Channel Messages</label>
-<select class="form-select" id="clearChan">
-<option value="general">general</option>
-<option value="gaming">gaming</option>
-<option value="memes">memes</option>
-</select>
-</div>
-<button class="btn btn-danger" id="clearChatBtn">🗑️ Clear Channel</button>
-</div>
-<div class="ap-section" data-section="owner">
-<div class="owner-section">
-<div class="section-title">📢 Announcements</div>
-<input type="text" class="form-input" id="ownerAnnounce" placeholder="Persistent announcement...">
-<button class="btn btn-primary" style="width:100%;margin-top:6px" id="ownerAnnounceBtn">📢 Post Announcement</button>
-</div>
-</div>
-</div>
-</div>
-
-<div class="container">
-<div class="sidebar">
-<div class="server-header">The Chet</div>
-<div class="channels">
-<div class="channel-section">
-<div class="section-header">Channels</div>
-<div class="channel" data-channel="announcements">
-<span class="channel-name">announcements</span>
-<span class="unread-badge">0</span>
-</div>
-<div class="channel active" data-channel="general">
-<span class="channel-name">general</span>
-<span class="unread-badge">0</span>
-</div>
-<div class="channel" data-channel="gaming">
-<span class="channel-name">gaming</span>
-<span class="unread-badge">0</span>
-</div>
-<div class="channel" data-channel="memes">
-<span class="channel-name">memes</span>
-<span class="unread-badge">0</span>
-</div>
-</div>
-<div class="channel-section">
-<div class="section-header">Direct Messages</div>
-<div id="dmList"></div>
-</div>
-</div>
-<div class="user-area" id="userArea">
-<div class="user-avatar" id="myAvatar">U
-<div class="notif-dot" id="notifDot"></div>
-<div class="avatar-badge owner" id="badgeOwner">👑</div>
-<div class="avatar-badge admin" id="badgeAdmin">⚡</div>
-<div class="avatar-badge vip" id="badgeVip">⭐</div>
-</div>
-<div class="user-display-name" id="myName">User</div>
-<div class="conn-status" id="connStatus"></div>
-</div>
-</div>
-
-<div class="main-content">
-<div class="chat-header">
-<div class="current-channel" id="curChan">general</div>
-<button class="send-btn" onclick="window.location.href='/utilities.html'" style="margin:0">Utilities</button>
-</div>
-<div class="messages" id="msgArea"></div>
-<div class="input-area">
-<div class="typing-indicator" id="typingInd"></div>
-<div class="reply-bar" id="replyBar">
-<span class="reply-bar-text" id="replyText"></span>
-<button class="reply-bar-close" id="cancelReply">×</button>
-</div>
-<div class="input-wrapper">
-<input type="text" class="msg-input" id="msgInput" placeholder="Message #general (try /help)" maxlength="2000">
-<button class="send-btn" id="sendBtn">Send</button>
-</div>
-</div>
-</div>
-
-<div class="sidebar right" id="rightSidebar">
-<div class="right-toggle" id="rightToggle">▶</div>
-<div class="server-header">
-<span>Online Users</span>
-<span class="online-count" id="onlineCount">0</span>
-</div>
-<div class="users-section">
-<div class="role-header owner-header" id="ownerHeader" style="display:none">👑 Owners</div>
-<div id="ownersList"></div>
-<div class="role-header admin-header" id="adminHeader" style="display:none">⚡ Admins</div>
-<div id="adminsList"></div>
-<div class="role-header vip-header" id="vipHeader" style="display:none">⭐ VIP</div>
-<div id="vipsList"></div>
-<div class="role-header guest-header" id="guestHeader" style="display:none">Users</div>
-<div id="guestsList"></div>
-</div>
-</div>
-</div>
-
-<script>
-const EMOJIS=['👍','👎','❤️','😂','😮','😢','🔥','🎉','👀','💯'];
-let ws,connected=false,username='',uuid=null,isAdmin=false,isVIP=false,isOwner=false;
-let curChan='general',chatType='channel',curDM=null,replyTo=null;
-const messages={},dmMessages={},dmPartners={},users=[],unreadChannels={},unreadDMs={};
-const $=id=>document.getElementById(id);
-let hasUnread=false,isTabVisible=true,selectedBanType='ip';
-
-document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
-
-const HELP_COMMANDS=[
-{name:'/help',desc:'Show this help menu'}
-];
-
-function updateFavicon(hasNotif){
-const fav=$('favicon');
-if(hasNotif){fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text><circle cx='85' cy='15' r='15' fill='%23ed4245'/></svg>"}
-else{fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text></svg>"}
-}
-
-function showFaviconNotif(){if(!isTabVisible){hasUnread=true;updateFavicon(true);$('notifDot').classList.add('show')}}
-function clearFaviconNotif(){hasUnread=false;updateFavicon(false);$('notifDot').classList.remove('show')}
-
-function send(d){if(ws&&ws.readyState===1)ws.send(JSON.stringify(d))}
-
-function notify(title,body,acts){
-const n=document.createElement('div');n.className='notif';
-n.innerHTML=`<div class="notif-title">${title}</div><div class="notif-body">${body}</div>${acts||''}`;
-$('notifs').appendChild(n);
-showFaviconNotif();
-if(!acts)setTimeout(()=>n.remove(),4000);
-return n;
-}
-
-function connect(){
-const url=location.protocol==='https:'?`wss://${location.host}`:`ws://${location.hostname}:${location.port||3000}`;
-ws=new WebSocket(url);
-ws.onopen=()=>{
-connected=true;$('connStatus').classList.add('online');$('sendBtn').disabled=false;
-send({type:'join',username,uuid,adminPassword:(isAdmin||isOwner)?'mod-is-rly-awesome':undefined,vipPassword:isVIP?'very-important-person':undefined,ownerPassword:isOwner?'10owna12':undefined});
-send({type:'getHistory',channel:curChan});
-};
-ws.onclose=()=>{connected=false;$('connStatus').classList.remove('online');$('sendBtn').disabled=true;setTimeout(connect,3000)};
-ws.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(er){console.error(er)}};
-}
-
-function handle(d){
-const h={
-joined:()=>{
-if(d.uuid){uuid=d.uuid;localStorage.setItem('uuid',uuid)}
-if(d.isAdmin){isAdmin=true;$('badgeAdmin').classList.add('show')}
-if(d.isVIP){isVIP=true;$('badgeVip').classList.add('show')}
-if(d.isOwner){isOwner=true;$('badgeOwner').classList.add('show');$('ownerTab').style.display='block'}
-},
-message:()=>{
-if(!messages[d.message.channel])messages[d.message.channel]=[];
-messages[d.message.channel].push(d.message);
-if(d.message.channel===curChan&&chatType==='channel')render();
-else{
-unreadChannels[d.message.channel]=(unreadChannels[d.message.channel]||0)+1;
-updateUnreadBadge(d.message.channel);
-showFaviconNotif();
-notify('💬 New Message',`#${d.message.channel}: ${d.message.author}: ${d.message.text.slice(0,50)}`);
-}
-},
-history:()=>{messages[d.channel]=d.messages;if(d.channel===curChan&&chatType==='channel')render()},
-userList:()=>{users.length=0;users.push(...d.users);updUsers()},
-typing:()=>{if((d.isPrivate&&dmPartners[curDM]===d.username)||(!d.isPrivate&&d.channel===curChan)){$('typingInd').textContent=d.isTyping?`${d.username} is typing...`:''}},
-privateChatRequest:()=>{
-const n=notify('💬 DM Request',`${d.from} wants to chat`,`<div class="notif-actions"><button class="notif-btn notif-accept" data-a="y">Accept</button><button class="notif-btn notif-decline" data-a="n">Decline</button></div>`);
-n.querySelector('[data-a="y"]').onclick=()=>{send({type:'privateChatResponse',from:d.from,accepted:true});n.remove()};
-n.querySelector('[data-a="n"]').onclick=()=>{send({type:'privateChatResponse',from:d.from,accepted:false});n.remove()};
-},
-privateChatAccepted:()=>{dmPartners[d.chatId]=d.with;addDM(d.chatId,d.with);switchDM(d.chatId,d.with)},
-privateChatRejected:()=>notify('❌',`${d.by} declined`),
-privateMessage:()=>{
-if(!dmMessages[d.message.chatId])dmMessages[d.message.chatId]=[];
-// Check if message already exists to prevent duplicates
-if(!dmMessages[d.message.chatId].find(m=>m.id===d.message.id)){
-dmMessages[d.message.chatId].push(d.message);
-}
-if(d.message.chatId===curDM&&chatType==='dm')render();
-else{
-unreadDMs[d.message.chatId]=(unreadDMs[d.message.chatId]||0)+1;
-updateDMBadge(d.message.chatId);
-showFaviconNotif();
-const partner=dmPartners[d.message.chatId];
-notify('💬 New DM',`@${partner}: ${d.message.text.slice(0,50)}`);
-}
-},
-privateHistory:()=>{dmMessages[d.chatId]=d.messages;if(d.chatId===curDM&&chatType==='dm')render()},
-reactionUpdate:()=>{const arr=d.isPrivate?dmMessages[d.chatId]:messages[d.channel];const m=arr?.find(x=>x.id===d.messageId);if(m){m.reactions=d.reactions;render()}},
-kicked:()=>{alert(d.message);location.href=d.redirectUrl||'https://google.com'},
-banned:()=>{alert(d.message);location.href='https://google.com'},
-timedOut:()=>notify('⏰',d.message),
-warning:()=>notify(`⚠️ Warning #${d.count}`,d.message),
-broadcast:()=>notify('📢',d.message),
-announcement:()=>{notify('📢',d.message.text);if(!messages.announcements)messages.announcements=[];messages.announcements.push(d.message);if(curChan==='announcements')render()},
-adminActionSuccess:()=>notify('✅',d.message||'Done'),
-error:()=>notify('❌',d.message),
-forceMute:()=>{notify('🔇',`Muted for ${d.duration}s`);$('msgInput').disabled=true;$('sendBtn').disabled=true;setTimeout(()=>{$('msgInput').disabled=false;$('sendBtn').disabled=!connected},d.duration*1000)},
-banList:()=>{$('bannedUsers').innerHTML=d.bannedUsers.length?d.bannedUsers.map(u=>`<div class="ban-item"><span>${u}</span><button class="unban-btn" onclick="send({type:'adminUnban',username:'${u}'})">Unban</button></div>`).join(''):'<div class="empty">None</div>';$('bannedIPs').innerHTML=d.bannedIPs.length?d.bannedIPs.map(ip=>`<div class="ban-item"><span>${ip}</span><button class="unban-btn" onclick="send({type:'adminUnbanIP',ip:'${ip}'})">Unban</button></div>`).join(''):'<div class="empty">None</div>'},
-chatCleared:()=>{if(messages[d.channel])messages[d.channel]=[];if(d.channel===curChan)render()},
-messageDeleted:()=>{if(messages[d.channel]){messages[d.channel]=messages[d.channel].filter(m=>m.id!==d.messageId);if(d.channel===curChan)render()}},
-spinScreen:()=>{document.body.style.animation='spin 2s linear';setTimeout(()=>document.body.style.animation='',2000)},
-shakeScreen:()=>{document.body.style.animation='shake .5s';setTimeout(()=>document.body.style.animation='',500)},
-flipScreen:()=>{document.body.style.transform='rotate(180deg)';setTimeout(()=>document.body.style.transform='',5000)},
-invertColors:()=>{document.body.style.filter='invert(1)';setTimeout(()=>document.body.style.filter='',5000)},
-rainbow:()=>{document.body.style.animation='rainbow 2s infinite';setTimeout(()=>document.body.style.animation='',5000)},
-blur:()=>{document.body.style.filter='blur(5px)';setTimeout(()=>document.body.style.filter='',5000)},
-matrix:()=>{document.body.style.cssText='background:#000!important';setTimeout(()=>document.body.style.cssText='',5000)},
-emojiSpam:()=>{for(let i=0;i<20;i++)setTimeout(()=>{const e=document.createElement('div');e.textContent=['😂','🔥','💀','🎉'][Math.floor(Math.random()*4)];e.style.cssText=`position:fixed;font-size:48px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;pointer-events:none;z-index:9999`;document.body.appendChild(e);setTimeout(()=>e.remove(),2000)},i*100)},
-confetti:()=>{const cols=['#ff0','#f0f','#0ff','#f00','#0f0'];for(let i=0;i<50;i++)setTimeout(()=>{const c=document.createElement('div');c.className='confetti';c.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${cols[Math.floor(Math.random()*5)]}`;document.body.appendChild(c);setTimeout(()=>c.remove(),3000)},i*40)},
-rickRoll:()=>window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ','_blank'),
-forceDisconnect:()=>{alert('Disconnected by admin');ws.close()}
-};
-if(h[d.type])h[d.type]();
-}
-
-function updateUnreadBadge(channel){
-const el=document.querySelector(`[data-channel="${channel}"]`);
-if(!el)return;
-const badge=el.querySelector('.unread-badge');
-const count=unreadChannels[channel]||0;
-if(badge){badge.textContent=count;el.classList.toggle('has-unread',count>0)}
-}
-
-function updateDMBadge(chatId){
-const el=document.querySelector(`[data-dm="${chatId}"]`);
-if(!el)return;
-const count=unreadDMs[chatId]||0;
-if(count>0){
-let badge=el.querySelector('.dm-badge');
-if(!badge){badge=document.createElement('span');badge.className='dm-badge';el.appendChild(badge)}
-badge.textContent=count;
-el.classList.add('has-unread');
-}else{
-const badge=el.querySelector('.dm-badge');
-if(badge)badge.remove();
-el.classList.remove('has-unread');
-}
-}
-
-function updUsers(){
-const ow=users.filter(u=>u.isOwner&&u.username!==username);
-const ad=users.filter(u=>u.isAdmin&&!u.isOwner&&u.username!==username);
-const vi=users.filter(u=>u.isVIP&&!u.isAdmin&&!u.isOwner&&u.username!==username);
-const gu=users.filter(u=>!u.isVIP&&!u.isAdmin&&!u.isOwner&&u.username!==username);
-
-const makeItem=(u)=>{
-let roleIcon='';
-let roleBadge='';
-if(u.isOwner){roleIcon='👑';roleBadge='<span class="role-badge owner">OWNER</span>'}
-else if(u.isAdmin){roleIcon='⚡';roleBadge='<span class="role-badge admin">ADMIN</span>'}
-else if(u.isVIP){roleIcon='⭐';roleBadge='<span class="role-badge vip">VIP</span>'}
-return `<div class="user-item"><span class="user-name">${roleIcon} ${u.username}${roleBadge}</span><button class="dm-btn" onclick="reqDM('${u.username}')">DM</button></div>`;
-};
-
-$('ownerHeader').style.display=ow.length?'block':'none';
-$('ownersList').innerHTML=ow.map(makeItem).join('');
-$('adminHeader').style.display=ad.length?'block':'none';
-$('adminsList').innerHTML=ad.map(makeItem).join('');
-$('vipHeader').style.display=vi.length?'block':'none';
-$('vipsList').innerHTML=vi.map(makeItem).join('');
-$('guestHeader').style.display=gu.length?'block':'none';
-$('guestsList').innerHTML=gu.map(makeItem).join('');
-$('onlineCount').textContent=users.length-1;
-updSelects();
-}
-
-function updSelects(){
-const others=users.filter(u=>u.username!==username);
-const opts='<option value="">-- Select User --</option>'+others.map(u=>`<option value="${u.username}">${u.username}</option>`).join('');
-['modUser','trollUser'].forEach(id=>{const el=$(id);if(el)el.innerHTML=opts});
-$('apUsers').innerHTML=others.length?others.map(u=>`<div class="ap-user"><div class="ap-user-info"><div class="ap-user-avatar">${u.username[0].toUpperCase()}</div><div class="ap-user-name">${u.username}${u.isOwner?' <span class="role-badge owner">OWNER</span>':u.isAdmin?' <span class="role-badge admin">ADMIN</span>':u.isVIP?' <span class="role-badge vip">VIP</span>':''}</div></div><div class="ap-user-actions"><button class="ap-btn ap-btn-kick" onclick="send({type:'adminKick',targetUsername:'${u.username}'})">Kick</button><button class="ap-btn ap-btn-to" onclick="send({type:'adminTimeout',targetUsername:'${u.username}',duration:60})">TO</button><button class="ap-btn ap-btn-mute" onclick="send({type:'adminForceMute',targetUsername:'${u.username}',duration:60})">Mute</button><button class="ap-btn ap-btn-ban" onclick="quickBan('${u.username}')">Ban</button></div></div>`).join(''):'<div class="empty">No other users online</div>';
-}
-
-function quickBan(username){
-if(confirm(`Ban ${username}?`)){
-send({type:'adminBan',targetUsername:username,banType:selectedBanType});
-}
-}
-
-function reqDM(u){send({type:'privateChatRequest',targetUsername:u})}
-
-function addDM(id,name){
-if(document.querySelector(`[data-dm="${id}"]`))return;
-const el=document.createElement('div');el.className='channel private';el.dataset.dm=id;
-el.innerHTML=`<span class="channel-name">${name}</span><button class="close-dm">×</button>`;
-el.querySelector('.close-dm').onclick=e=>{e.stopPropagation();el.remove();delete dmPartners[id];delete dmMessages[id];delete unreadDMs[id];if(curDM===id)switchChan('general')};
-el.onclick=()=>switchDM(id,name);
-$('dmList').appendChild(el);
-}
-
-function switchChan(ch){
-chatType='channel';curDM=null;curChan=ch;
-$('curChan').textContent=ch;$('curChan').classList.remove('private');
-$('msgInput').placeholder=`Message #${ch} (try /help)`;
-document.querySelectorAll('.channel').forEach(c=>{c.classList.remove('active');if(c.dataset.channel===ch)c.classList.add('active')});
-if(!messages[ch])send({type:'getHistory',channel:ch});else render();
-unreadChannels[ch]=0;
-updateUnreadBadge(ch);
-clearFaviconNotif();
-}
-
-function switchDM(id,name){
-chatType='dm';curDM=id;
-$('curChan').textContent=name;$('curChan').classList.add('private');
-$('msgInput').placeholder=`Message @${name}`;
-document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
-document.querySelector(`[data-dm="${id}"]`)?.classList.add('active');
-if(!dmMessages[id])send({type:'getPrivateHistory',chatId:id});else render();
-unreadDMs[id]=0;
-updateDMBadge(id);
-clearFaviconNotif();
-}
-
-function render(){
-const arr=chatType==='dm'?dmMessages[curDM]||[]:messages[curChan]||[];
-$('msgArea').innerHTML=arr.map(m=>{
-const authorClass=m.isOwner?'owner':m.isAdmin?'admin':m.isVIP?'vip':'normal';
-const badge=m.isOwner?'<span class="role-badge owner">OWNER</span>':m.isAdmin?'<span class="role-badge admin">ADMIN</span>':m.isVIP?'<span class="role-badge vip">VIP</span>':'';
-const replyHtml=m.replyTo?`<div class="msg-reply"><span class="msg-reply-author">↩ ${m.replyTo.author}:</span> ${m.replyTo.text}</div>`:'';
-let reactHtml='';
-if(m.reactions&&Object.keys(m.reactions).length){
-reactHtml='<div class="reactions">'+Object.entries(m.reactions).map(([e,u])=>`<div class="reaction${u.includes(username)?' active':''}" onclick="${u.includes(username)?'remReact':'addReact'}('${m.id}','${e}')">${e}<span class="reaction-count">${u.length}</span></div>`).join('')+'</div>';
-}
-const adminBtns=(isAdmin||isOwner)&&!m.isSystem?`<button class="msg-action" onclick="send({type:'adminDeleteMessage',messageId:'${m.id}',channel:'${m.channel||curChan}'})">🗑️</button>`:'';
-return `<div class="message" data-id="${m.id}"><div class="msg-avatar">${m.author[0].toUpperCase()}</div><div class="msg-content">${replyHtml}<div class="msg-header"><span class="msg-author ${authorClass}">${m.author}</span>${badge}<span class="msg-time">${new Date(m.timestamp).toLocaleTimeString().slice(0,5)}</span></div><div class="msg-text">${esc(m.text)}</div>${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
-}).join('');
-$('msgArea').scrollTop=$('msgArea').scrollHeight;
-}
-
-function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function toggleEmoji(id){document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'));$('ep-'+id)?.classList.toggle('show')}
-function addReact(id,e){send({type:'addReaction',messageId:id,emoji:e,channel:curChan,isPrivate:chatType==='dm',chatId:curDM})}
-function remReact(id,e){send({type:'removeReaction',messageId:id,emoji:e,channel:curChan,isPrivate:chatType==='dm',chatId:curDM})}
-function setReply(r){replyTo=r;$('replyText').innerHTML=`Replying to <b>${r.author}</b>`;$('replyBar').classList.add('show');$('msgInput').focus()}
-function clearReply(){replyTo=null;$('replyBar').classList.remove('show')}
-
-function sendMsg(){
-const t=$('msgInput').value.trim();
-if(!t||!connected)return;
-if(t.startsWith('/')){
-const cmd=t.split(' ')[0].toLowerCase();
-if(cmd==='/help'){
-showHelp();
-$('msgInput').value='';
-return;
-}
-}
-if(chatType==='dm')send({type:'privateMessage',chatId:curDM,text:t,targetUsername:dmPartners[curDM],replyTo});
-else send({type:'message',channel:curChan,text:t,replyTo});
-$('msgInput').value='';
-clearReply();
-}
-
-function showHelp(){
-const html=HELP_COMMANDS.map(c=>`<div class="help-command"><div class="help-command-name">${c.name}</div><div class="help-command-desc">${c.desc}</div></div>`).join('');
-$('helpContent').innerHTML=html;
-$('helpModal').classList.add('show');
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-$('loginBtn').onclick=tryLogin;
-$('guestLogin').onclick=()=>{tryLogin('classic')};
-$('pwdInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
-
-function tryLogin(guestMode){
-const p=guestMode||$('pwdInput').value.trim();
-if(p==='10owna12'){isAdmin=true;isOwner=true}
-else if(p==='mod-is-rly-awesome'){isAdmin=true}
-else if(p==='very-important-person'){isVIP=true}
-else if(p==='classic'||guestMode==='classic'){}
-else{$('loginError').textContent='Wrong password';return}
-
-let u=prompt('Enter username (max 30 chars):','User')||'User';
-username=u.slice(0,30).trim()||'User';
-$('myName').textContent=username;
-$('myAvatar').childNodes[0].textContent=username[0].toUpperCase();
-
-if(isOwner)$('badgeOwner').classList.add('show');
-else if(isAdmin)$('badgeAdmin').classList.add('show');
-else if(isVIP)$('badgeVip').classList.add('show');
-
-if(isOwner)$('ownerTab').style.display='block';
-
-uuid=localStorage.getItem('uuid')||null;
-$('loginOverlay').style.display='none';
-connect();
-}
-
-$('sendBtn').onclick=sendMsg;
-$('msgInput').onkeypress=e=>{if(e.key==='Enter')sendMsg()};
-$('cancelReply').onclick=clearReply;
-
-document.querySelectorAll('.channel[data-channel]').forEach(c=>{c.onclick=()=>switchChan(c.dataset.channel)});
-
-$('closeHelp').onclick=()=>$('helpModal').classList.remove('show');
-
-$('userArea').onclick=()=>{
-clearFaviconNotif();
-if(isAdmin||isOwner){$('adminPanel').classList.toggle('show');updSelects();send({type:'adminGetBanList'})}
-};
-
-$('closeAdmin').onclick=()=>$('adminPanel').classList.remove('show');
-
-$('rightToggle').onclick=()=>{
-$('rightSidebar').classList.toggle('collapsed');
-$('rightToggle').textContent=$('rightSidebar').classList.contains('collapsed')?'◀':'▶';
-};
-
-document.querySelectorAll('.ap-tab').forEach(tab=>{
-tab.onclick=()=>{
-document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
-document.querySelectorAll('.ap-section').forEach(s=>s.classList.remove('active'));
-tab.classList.add('active');
-const sec=document.querySelector(`.ap-section[data-section="${tab.dataset.tab}"]`);
-if(sec)sec.classList.add('active');
-}
-});
-
-document.querySelectorAll('.ban-type-btn').forEach(btn=>{
-btn.onclick=()=>{
-document.querySelectorAll('.ban-type-btn').forEach(b=>b.classList.remove('selected'));
-btn.classList.add('selected');
-selectedBanType=btn.dataset.type;
-}
-});
-
-$('modAction').onchange=()=>{
-const action=$('modAction').value;
-$('banTypeSelector').style.display=action==='ban'?'flex':'none';
-};
-
-$('execMod').onclick=()=>{
-const u=$('modUser').value,a=$('modAction').value,d=parseInt($('modDur').value)||60,r=$('modReason').value;
-if(!u)return notify('❌','Select user');
-if(a==='kick')send({type:'adminKick',targetUsername:u,reason:r});
-else if(a==='timeout')send({type:'adminTimeout',targetUsername:u,duration:d,reason:r});
-else if(a==='mute')send({type:'adminForceMute',targetUsername:u,duration:d});
-else if(a==='ban')send({type:'adminBan',targetUsername:u,banType:selectedBanType,reason:r});
-else if(a==='warning')send({type:'adminWarning',targetUsername:u,reason:r||'Warning'});
-};
-
-document.querySelectorAll('[data-troll]').forEach(b=>{
-b.onclick=()=>{
-const u=$('trollUser').value;if(!u)return notify('❌','Select user');
-const t=b.dataset.troll;
-send({type:'admin'+t.charAt(0).toUpperCase()+t.slice(1),targetUsername:u});
-}
-});
-
-$('confettiAll').onclick=()=>send({type:'adminConfetti'});
-
-$('sendBroadcast').onclick=()=>{const m=$('broadcastMsg').value;if(m){send({type:'adminBroadcast',message:m});$('broadcastMsg').value=''}};
-
-$('refreshBans').onclick=()=>send({type:'adminGetBanList'});
-
-$('applySlowMode').onclick=()=>send({type:'adminSlowMode',enabled:$('slowEnabled').checked,duration:parseInt($('slowDur').value)||5});
-
-$('clearChatBtn').onclick=()=>{if(confirm('Clear chat?'))send({type:'adminClearChat',channel:$('clearChan').value})};
-
-$('ownerAnnounceBtn').onclick=()=>{const t=$('ownerAnnounce').value;if(t){send({type:'ownerAnnouncement',text:t});$('ownerAnnounce').value=''}};
-
-document.onclick=e=>{if(!e.target.closest('.emoji-picker')&&!e.target.closest('.msg-action'))document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'))};
-
-$('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList.remove('show')};
-});
-</script>
-</body>
-</html> warn" data-troll="spinScreen">🌀 Spin</button>
+<button class="troll-btn warn" data-troll="spinScreen">🌀 Spin</button>
 <button class="troll-btn warn" data-troll="shakeScreen">📳 Shake</button>
 <button class="troll-btn warn" data-troll="flipScreen">🙃 Flip</button>
 <button class="troll-btn warn" data-troll="invertColors">🎨 Invert</button>
@@ -833,9 +532,8 @@ $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList
 </div>
 <div class="ap-section" data-section="owner">
 <div class="owner-section">
-<div class="section-title">📢 Announcements</div>
-<input type="text" class="form-input" id="ownerAnnounce" placeholder="Persistent announcement...">
-<button class="btn btn-primary" style="width:100%;margin-top:6px" id="ownerAnnounceBtn">📢 Post Announcement</button>
+<div class="section-title">👑 Owner Controls</div>
+<p style="color:#96989d;font-size:12px;padding:8px">Advanced owner features coming soon...</p>
 </div>
 </div>
 </div>
@@ -847,10 +545,6 @@ $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList
 <div class="channels">
 <div class="channel-section">
 <div class="section-header">Channels</div>
-<div class="channel" data-channel="announcements">
-<span class="channel-name">announcements</span>
-<span class="unread-badge">0</span>
-</div>
 <div class="channel active" data-channel="general">
 <span class="channel-name">general</span>
 <span class="unread-badge">0</span>
@@ -868,6 +562,47 @@ $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList
 <div class="section-header">Direct Messages</div>
 <div id="dmList"></div>
 </div>
+<div class="voice-section">
+<div class="section-header">Voice Channels</div>
+<div class="voice-channel" data-voice="general">
+<span class="voice-channel-name">
+<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#dcddde;stroke-width:5;stroke-linejoin:round;fill:#dcddde;"/><path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" style="fill:none;stroke:#dcddde;stroke-width:5;stroke-linecap:round"/></svg>
+general
+</span>
+<span class="voice-status" id="voiceStatusGeneral">0 users</span>
+</div>
+<div class="voice-controls" id="voiceControlsGeneral">
+<button class="voice-btn mute" id="muteVoiceGeneral">🎤 Mute</button>
+<button class="voice-btn leave" id="leaveVoiceGeneral">Leave</button>
+</div>
+<div class="voice-participants" id="voiceParticipantsGeneral"></div>
+
+<div class="voice-channel" data-voice="chill">
+<span class="voice-channel-name">
+<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#dcddde;stroke-width:5;stroke-linejoin:round;fill:#dcddde;"/><path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" style="fill:none;stroke:#dcddde;stroke-width:5;stroke-linecap:round"/></svg>
+chill
+</span>
+<span class="voice-status" id="voiceStatusChill">0 users</span>
+</div>
+<div class="voice-controls" id="voiceControlsChill">
+<button class="voice-btn mute" id="muteVoiceChill">🎤 Mute</button>
+<button class="voice-btn leave" id="leaveVoiceChill">Leave</button>
+</div>
+<div class="voice-participants" id="voiceParticipantsChill"></div>
+
+<div class="voice-channel" data-voice="gaming">
+<span class="voice-channel-name">
+<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#dcddde;stroke-width:5;stroke-linejoin:round;fill:#dcddde;"/><path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" style="fill:none;stroke:#dcddde;stroke-width:5;stroke-linecap:round"/></svg>
+gaming
+</span>
+<span class="voice-status" id="voiceStatusGaming">0 users</span>
+</div>
+<div class="voice-controls" id="voiceControlsGaming">
+<button class="voice-btn mute" id="muteVoiceGaming">🎤 Mute</button>
+<button class="voice-btn leave" id="leaveVoiceGaming">Leave</button>
+</div>
+<div class="voice-participants" id="voiceParticipantsGaming"></div>
+</div>
 </div>
 <div class="user-area" id="userArea">
 <div class="user-avatar" id="myAvatar">U
@@ -877,6 +612,7 @@ $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList
 <div class="avatar-badge vip" id="badgeVip">⭐</div>
 </div>
 <div class="user-display-name" id="myName">User</div>
+<button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
 <div class="conn-status" id="connStatus"></div>
 </div>
 </div>
@@ -884,7 +620,6 @@ $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList
 <div class="main-content">
 <div class="chat-header">
 <div class="current-channel" id="curChan">general</div>
-<button style="background:#5865f2;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:500;transition:background .2s" onmouseover="this.style.background='#4752c4'" onmouseout="this.style.background='#5865f2'" onclick="window.location.href='/utilities.html'">🛠️ Utilities</button>
 </div>
 <div class="messages" id="msgArea"></div>
 <div class="input-area">
@@ -894,7 +629,10 @@ $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList
 <button class="reply-bar-close" id="cancelReply">×</button>
 </div>
 <div class="input-wrapper">
+<div id="imagePreviewContainer"></div>
 <input type="text" class="msg-input" id="msgInput" placeholder="Message #general (try /help)" maxlength="2000">
+<input type="file" class="image-input" id="imageInput" accept="image/*">
+<button class="input-btn" id="imageBtn" title="Upload image">📷</button>
 <button class="send-btn" id="sendBtn">Send</button>
 </div>
 </div>
@@ -925,9 +663,54 @@ let ws,connected=false,username='',uuid=null,isAdmin=false,isVIP=false,isOwner=f
 let curChan='general',chatType='channel',curDM=null,replyTo=null;
 const messages={},dmMessages={},dmPartners={},users=[],unreadChannels={},unreadDMs={};
 const $=id=>document.getElementById(id);
-let hasUnread=false,isTabVisible=true,selectedBanType='ip';
+let hasUnread=false,isTabVisible=true,selectedBanType='ip',selectedImage=null,notifPermission=false,notificationsEnabled='all';
+let currentVoiceChannel=null,localStream=null,isMuted=false,peerConnections={},voiceChannelData={};
+let userSettings={profileColor:'default',profanityFilter:false,messageGrouping:false,lightTheme:false};
+
+function filterProfanity(text) {
+  if (!userSettings.profanityFilter) return text;
+  const badWords = ['fuck', 'shit', 'damn', 'ass', 'bitch', 'bastard', 'nigga', 'nigger', 'faggot', 'n1gga', 'n1gger', 'nigg@', 'n1gg@', '$hit', 'sh1t', '$h1t', 'a$s', 'as$', 'a$$', 'b1tch', 'fuk', 'fuc', 'cock', 'c0ck', 'dick', 'dik', 'dic', 'd1ck', 'd1k', 'd1c', 'cunt', 'tit', 't1t'];
+  let filtered = text;
+  badWords.forEach(word => {
+    const regex = new RegExp(word, 'gi');
+    filtered = filtered.replace(regex, '*'.repeat(word.length));
+  });
+  return filtered;
+}
 
 document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
+document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
+
+// Request notification permission
+async function requestNotifPerm(){
+if('Notification' in window&&Notification.permission==='default'){
+const perm=await Notification.requestPermission();
+notifPermission=perm==='granted';
+}else if('Notification' in window&&Notification.permission==='granted'){
+notifPermission=true;
+}
+}
+
+// Show browser notification
+function showBrowserNotif(title,body,icon='💬'){
+if(notifPermission&&!isTabVisible&&notificationsEnabled){
+try{
+const notif=new Notification(title,{
+body,
+icon:location.origin+'/favicon.ico',
+tag:`chat-${Date.now()}`,
+requireInteraction:false,
+silent:false
+});
+notif.onclick=()=>{
+window.focus();
+notif.close();
+};
+}catch(e){
+console.error('Notification error:',e);
+}
+}
+}
 
 const HELP_COMMANDS=[
 {name:'/help',desc:'Show this help menu'}
@@ -945,6 +728,7 @@ function clearFaviconNotif(){hasUnread=false;updateFavicon(false);$('notifDot').
 function send(d){if(ws&&ws.readyState===1)ws.send(JSON.stringify(d))}
 
 function notify(title,body,acts){
+if(!notificationsEnabled)return null;
 const n=document.createElement('div');n.className='notif';
 n.innerHTML=`<div class="notif-title">${title}</div><div class="notif-body">${body}</div>${acts||''}`;
 $('notifs').appendChild(n);
@@ -953,16 +737,67 @@ if(!acts)setTimeout(()=>n.remove(),4000);
 return n;
 }
 
+// Upload image - convert to base64 with compression
+async function uploadImage(file){
+return new Promise((resolve,reject)=>{
+const reader=new FileReader();
+reader.onload=(e)=>{
+const img=new Image();
+img.onload=()=>{
+const canvas=document.createElement('canvas');
+let width=img.width;
+let height=img.height;
+const maxDim=800;
+if(width>maxDim||height>maxDim){
+if(width>height){
+height=Math.round(height*maxDim/width);
+width=maxDim;
+}else{
+width=Math.round(width*maxDim/height);
+height=maxDim;
+}
+}
+canvas.width=width;
+canvas.height=height;
+const ctx=canvas.getContext('2d');
+ctx.drawImage(img,0,0,width,height);
+resolve(canvas.toDataURL('image/jpeg',0.7));
+};
+img.onerror=reject;
+img.src=e.target.result;
+};
+reader.onerror=reject;
+reader.readAsDataURL(file);
+});
+}
+
 function connect(){
-const url=location.protocol==='https:'?`wss://${location.host}`:`ws://${location.hostname}:${location.port||3000}`;
+const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const host = location.host;
+const url = `${protocol}//${host}`;
+console.log('Attempting WebSocket connection to:', url);
 ws=new WebSocket(url);
+
 ws.onopen=()=>{
+console.log('WebSocket connected!');
 connected=true;$('connStatus').classList.add('online');$('sendBtn').disabled=false;
 send({type:'join',username,uuid,adminPassword:(isAdmin||isOwner)?'mod-is-rly-awesome':undefined,vipPassword:isVIP?'very-important-person':undefined,ownerPassword:isOwner?'10owna12':undefined});
 send({type:'getHistory',channel:curChan});
 };
-ws.onclose=()=>{connected=false;$('connStatus').classList.remove('online');$('sendBtn').disabled=true;setTimeout(connect,3000)};
-ws.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(er){console.error(er)}};
+
+ws.onerror=(err)=>{
+console.error('WebSocket error:', err);
+notify('❌', 'Connection error');
+};
+
+ws.onclose=(event)=>{
+console.log('WebSocket closed:', event.code, event.reason);
+connected=false;$('connStatus').classList.remove('online');$('sendBtn').disabled=true;
+notify('⚠️', 'Disconnected. Reconnecting...');
+setTimeout(connect,3000);
+};
+
+ws.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(er){console.error('Message error:',er)}};
 }
 
 function handle(d){
@@ -976,12 +811,22 @@ if(d.isOwner){isOwner=true;$('badgeOwner').classList.add('show');$('ownerTab').s
 message:()=>{
 if(!messages[d.message.channel])messages[d.message.channel]=[];
 messages[d.message.channel].push(d.message);
-if(d.message.channel===curChan&&chatType==='channel')render();
-else{
+if(d.message.channel===curChan&&chatType==='channel'&&isTabVisible){
+render();
+}else{
+if(d.message.channel!==curChan||chatType!=='channel'){
 unreadChannels[d.message.channel]=(unreadChannels[d.message.channel]||0)+1;
 updateUnreadBadge(d.message.channel);
+}
+if((!isTabVisible||d.message.channel!==curChan||chatType!=='channel')&&notificationsEnabled==='all'){
 showFaviconNotif();
-notify('💬 New Message',`#${d.message.channel}: ${d.message.author}: ${d.message.text.slice(0,50)}`);
+const preview=d.message.imageUrl?'[Image]':d.message.text.slice(0,50);
+notify('💬 New Message',`#${d.message.channel}: ${d.message.author}: ${preview}`);
+showBrowserNotif(`New message in #${d.message.channel}`,`${d.message.author}: ${preview}`);
+}
+if(d.message.channel===curChan&&chatType==='channel'&&!isTabVisible){
+render();
+}
 }
 },
 history:()=>{messages[d.channel]=d.messages;if(d.channel===curChan&&chatType==='channel')render()},
@@ -989,21 +834,38 @@ userList:()=>{users.length=0;users.push(...d.users);updUsers()},
 typing:()=>{if((d.isPrivate&&dmPartners[curDM]===d.username)||(!d.isPrivate&&d.channel===curChan)){$('typingInd').textContent=d.isTyping?`${d.username} is typing...`:''}},
 privateChatRequest:()=>{
 const n=notify('💬 DM Request',`${d.from} wants to chat`,`<div class="notif-actions"><button class="notif-btn notif-accept" data-a="y">Accept</button><button class="notif-btn notif-decline" data-a="n">Decline</button></div>`);
+showBrowserNotif('DM Request',`${d.from} wants to chat with you`);
 n.querySelector('[data-a="y"]').onclick=()=>{send({type:'privateChatResponse',from:d.from,accepted:true});n.remove()};
 n.querySelector('[data-a="n"]').onclick=()=>{send({type:'privateChatResponse',from:d.from,accepted:false});n.remove()};
 },
-privateChatAccepted:()=>{dmPartners[d.chatId]=d.with;addDM(d.chatId,d.with);switchDM(d.chatId,d.with)},
+privateChatAccepted:()=>{
+dmPartners[d.chatId]=d.with;
+addDM(d.chatId,d.with);
+switchDM(d.chatId,d.with);
+},
 privateChatRejected:()=>notify('❌',`${d.by} declined`),
 privateMessage:()=>{
 if(!dmMessages[d.message.chatId])dmMessages[d.message.chatId]=[];
+if(!dmMessages[d.message.chatId].find(m=>m.id===d.message.id)){
 dmMessages[d.message.chatId].push(d.message);
-if(d.message.chatId===curDM&&chatType==='dm')render();
-else{
+}
+if(d.message.chatId===curDM&&chatType==='dm'&&isTabVisible){
+render();
+}else{
+if(d.message.chatId!==curDM||chatType!=='dm'){
 unreadDMs[d.message.chatId]=(unreadDMs[d.message.chatId]||0)+1;
 updateDMBadge(d.message.chatId);
+}
+if((!isTabVisible||d.message.chatId!==curDM||chatType!=='dm')&&(notificationsEnabled==='all'||notificationsEnabled==='dm')){
 showFaviconNotif();
 const partner=dmPartners[d.message.chatId];
-notify('💬 New DM',`@${partner}: ${d.message.text.slice(0,50)}`);
+const preview=d.message.imageUrl?'[Image]':d.message.text.slice(0,50);
+notify('💬 New DM',`@${partner}: ${preview}`);
+showBrowserNotif(`New DM from ${partner}`,preview);
+}
+if(d.message.chatId===curDM&&chatType==='dm'&&!isTabVisible){
+render();
+}
 }
 },
 privateHistory:()=>{dmMessages[d.chatId]=d.messages;if(d.chatId===curDM&&chatType==='dm')render()},
@@ -1013,7 +875,6 @@ banned:()=>{alert(d.message);location.href='https://google.com'},
 timedOut:()=>notify('⏰',d.message),
 warning:()=>notify(`⚠️ Warning #${d.count}`,d.message),
 broadcast:()=>notify('📢',d.message),
-announcement:()=>{notify('📢',d.message.text);if(!messages.announcements)messages.announcements=[];messages.announcements.push(d.message);if(curChan==='announcements')render()},
 adminActionSuccess:()=>notify('✅',d.message||'Done'),
 error:()=>notify('❌',d.message),
 forceMute:()=>{notify('🔇',`Muted for ${d.duration}s`);$('msgInput').disabled=true;$('sendBtn').disabled=true;setTimeout(()=>{$('msgInput').disabled=false;$('sendBtn').disabled=!connected},d.duration*1000)},
@@ -1030,7 +891,15 @@ matrix:()=>{document.body.style.cssText='background:#000!important';setTimeout((
 emojiSpam:()=>{for(let i=0;i<20;i++)setTimeout(()=>{const e=document.createElement('div');e.textContent=['😂','🔥','💀','🎉'][Math.floor(Math.random()*4)];e.style.cssText=`position:fixed;font-size:48px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;pointer-events:none;z-index:9999`;document.body.appendChild(e);setTimeout(()=>e.remove(),2000)},i*100)},
 confetti:()=>{const cols=['#ff0','#f0f','#0ff','#f00','#0f0'];for(let i=0;i<50;i++)setTimeout(()=>{const c=document.createElement('div');c.className='confetti';c.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${cols[Math.floor(Math.random()*5)]}`;document.body.appendChild(c);setTimeout(()=>c.remove(),3000)},i*40)},
 rickRoll:()=>window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ','_blank'),
-forceDisconnect:()=>{alert('Disconnected by admin');ws.close()}
+forceDisconnect:()=>{alert('Disconnected by admin');ws.close()},
+voiceUsers:()=>{
+voiceChannelData[d.channel]=d.users;
+updateVoiceUI(d.channel);
+},
+voiceOffer:()=>handleVoiceOffer(d),
+voiceAnswer:()=>handleVoiceAnswer(d),
+voiceIceCandidate:()=>handleIceCandidate(d),
+voiceUserLeft:()=>handleVoiceUserLeft(d)
 };
 if(h[d.type])h[d.type]();
 }
@@ -1099,7 +968,10 @@ send({type:'adminBan',targetUsername:username,banType:selectedBanType});
 }
 }
 
-function reqDM(u){send({type:'privateChatRequest',targetUsername:u})}
+function reqDM(u){
+// Always send DM request
+send({type:'privateChatRequest',targetUsername:u});
+}
 
 function addDM(id,name){
 if(document.querySelector(`[data-dm="${id}"]`))return;
@@ -1133,18 +1005,34 @@ updateDMBadge(id);
 clearFaviconNotif();
 }
 
+function showImageModal(url){
+const modal=$('imageModal');
+modal.querySelector('img').src=url;
+modal.classList.add('show');
+}
+
 function render(){
 const arr=chatType==='dm'?dmMessages[curDM]||[]:messages[curChan]||[];
-$('msgArea').innerHTML=arr.map(m=>{
+$('msgArea').innerHTML=arr.map((m,i)=>{
+const prevMsg=i>0?arr[i-1]:null;
+const isGrouped=userSettings.messageGrouping&&prevMsg&&prevMsg.author===m.author&&!m.replyTo&&!prevMsg.replyTo&&(m.timestamp-prevMsg.timestamp)<60000;
+
+const colorClass=m.profileColor?`color-${m.profileColor}`:'';
 const authorClass=m.isOwner?'owner':m.isAdmin?'admin':m.isVIP?'vip':'normal';
 const badge=m.isOwner?'<span class="role-badge owner">OWNER</span>':m.isAdmin?'<span class="role-badge admin">ADMIN</span>':m.isVIP?'<span class="role-badge vip">VIP</span>':'';
-const replyHtml=m.replyTo?`<div class="msg-reply"><span class="msg-reply-author">↩ ${m.replyTo.author}:</span> ${m.replyTo.text}</div>`:'';
+const replyHtml=m.replyTo?`<div class="msg-reply"><span class="msg-reply-author">↩ ${m.replyTo.author}:</span> ${filterProfanity(m.replyTo.text)}</div>`:'';
+const imageHtml=m.imageUrl?`<img src="${m.imageUrl}" class="msg-image" onclick="showImageModal('${m.imageUrl}')" alt="Attached image">`:'';
 let reactHtml='';
 if(m.reactions&&Object.keys(m.reactions).length){
 reactHtml='<div class="reactions">'+Object.entries(m.reactions).map(([e,u])=>`<div class="reaction${u.includes(username)?' active':''}" onclick="${u.includes(username)?'remReact':'addReact'}('${m.id}','${e}')">${e}<span class="reaction-count">${u.length}</span></div>`).join('')+'</div>';
 }
 const adminBtns=(isAdmin||isOwner)&&!m.isSystem?`<button class="msg-action" onclick="send({type:'adminDeleteMessage',messageId:'${m.id}',channel:'${m.channel||curChan}'})">🗑️</button>`:'';
-return `<div class="message" data-id="${m.id}"><div class="msg-avatar">${m.author[0].toUpperCase()}</div><div class="msg-content">${replyHtml}<div class="msg-header"><span class="msg-author ${authorClass}">${m.author}</span>${badge}<span class="msg-time">${new Date(m.timestamp).toLocaleTimeString().slice(0,5)}</span></div><div class="msg-text">${esc(m.text)}</div>${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
+
+if(isGrouped){
+return `<div class="message grouped" data-id="${m.id}"><div class="msg-content"><div class="msg-text">${esc(filterProfanity(m.text))}</div>${imageHtml}${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
+}
+
+return `<div class="message" data-id="${m.id}"><div class="msg-avatar ${colorClass}">${m.author[0].toUpperCase()}</div><div class="msg-content">${replyHtml}<div class="msg-header"><span class="msg-author ${authorClass}">${m.author}</span>${badge}<span class="msg-time">${new Date(m.timestamp).toLocaleTimeString().slice(0,5)}</span></div><div class="msg-text">${esc(filterProfanity(m.text))}</div>${imageHtml}${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
 }).join('');
 $('msgArea').scrollTop=$('msgArea').scrollHeight;
 }
@@ -1156,9 +1044,9 @@ function remReact(id,e){send({type:'removeReaction',messageId:id,emoji:e,channel
 function setReply(r){replyTo=r;$('replyText').innerHTML=`Replying to <b>${r.author}</b>`;$('replyBar').classList.add('show');$('msgInput').focus()}
 function clearReply(){replyTo=null;$('replyBar').classList.remove('show')}
 
-function sendMsg(){
+async function sendMsg(){
 const t=$('msgInput').value.trim();
-if(!t||!connected)return;
+if((!t&&!selectedImage)||!connected)return;
 if(t.startsWith('/')){
 const cmd=t.split(' ')[0].toLowerCase();
 if(cmd==='/help'){
@@ -1167,8 +1055,24 @@ $('msgInput').value='';
 return;
 }
 }
-if(chatType==='dm')send({type:'privateMessage',chatId:curDM,text:t,targetUsername:dmPartners[curDM],replyTo});
-else send({type:'message',channel:curChan,text:t,replyTo});
+
+let imageUrl=null;
+if(selectedImage){
+$('sendBtn').disabled=true;
+try{
+imageUrl=await uploadImage(selectedImage);
+}catch(e){
+notify('❌','Failed to process image');
+}
+selectedImage=null;
+$('imagePreviewContainer').innerHTML='';
+$('imageInput').value='';
+$('sendBtn').disabled=false;
+if(!imageUrl&&!t)return;
+}
+
+if(chatType==='dm')send({type:'privateMessage',chatId:curDM,text:t||'',targetUsername:dmPartners[curDM],replyTo,imageUrl});
+else send({type:'message',channel:curChan,text:t||'',replyTo,imageUrl});
 $('msgInput').value='';
 clearReply();
 }
@@ -1179,21 +1083,191 @@ $('helpContent').innerHTML=html;
 $('helpModal').classList.add('show');
 }
 
+// Voice channel functions
+function updateVoiceUI(channel){
+const users=voiceChannelData[channel]||[];
+const channelName=channel.charAt(0).toUpperCase()+channel.slice(1);
+console.log('Updating voice UI for',channel,', users:', users);
+$('voiceStatus'+channelName).textContent=`${users.length} user${users.length!==1?'s':''}`;
+const participantsDiv=$('voiceParticipants'+channelName);
+if(users.length>0){
+participantsDiv.classList.add('show');
+participantsDiv.innerHTML=users.map(u=>`<div class="voice-participant">${u}</div>`).join('');
+}else{
+participantsDiv.classList.remove('show');
+}
+}
+
+async function joinVoiceChannel(channel){
+console.log('Attempting to join voice channel:',channel);
+if(currentVoiceChannel===channel){
+console.log('Already in this channel');
+return;
+}
+if(currentVoiceChannel){
+await leaveVoiceChannel();
+}
+try{
+console.log('Requesting microphone access...');
+localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+console.log('Microphone access granted');
+currentVoiceChannel=channel;
+const channelName=channel.charAt(0).toUpperCase()+channel.slice(1);
+$('voiceControls'+channelName).style.display='flex';
+document.querySelector(`[data-voice="${channel}"]`).classList.add('active');
+console.log('Sending joinVoice message');
+send({type:'joinVoice',username,channel});
+notify('🔊',`Joined ${channel} voice channel`);
+
+// Create peer connections for existing users
+const users=voiceChannelData[channel]||[];
+users.forEach(user=>{
+if(user!==username){
+console.log('Creating peer connection for:', user);
+createPeerConnection(user,true,channel);
+}
+});
+}catch(e){
+console.error('Microphone error:',e);
+notify('❌','Could not access microphone: '+e.message);
+}
+}
+
+function leaveVoiceChannel(){
+console.log('Leaving voice channel...');
+if(localStream){
+localStream.getTracks().forEach(track=>track.stop());
+localStream=null;
+console.log('Stopped local stream');
+}
+Object.values(peerConnections).forEach(pc=>pc.close());
+peerConnections={};
+if(currentVoiceChannel){
+const channelName=currentVoiceChannel.charAt(0).toUpperCase()+currentVoiceChannel.slice(1);
+$('voiceControls'+channelName).style.display='none';
+document.querySelector(`[data-voice="${currentVoiceChannel}"]`).classList.remove('active');
+$('muteVoice'+channelName).classList.remove('active');
+$('muteVoice'+channelName).textContent='🎤 Mute';
+send({type:'leaveVoice',channel:currentVoiceChannel});
+}
+isMuted=false;
+currentVoiceChannel=null;
+notify('🔇','Left voice channel');
+console.log('Left voice channel');
+}
+
+function toggleMute(){
+console.log('Toggle mute, current state:', isMuted);
+if(!localStream||!currentVoiceChannel){
+console.log('No local stream or channel');
+return;
+}
+isMuted=!isMuted;
+localStream.getAudioTracks().forEach(track=>{
+track.enabled=!isMuted;
+console.log('Track enabled:', track.enabled);
+});
+const channelName=currentVoiceChannel.charAt(0).toUpperCase()+currentVoiceChannel.slice(1);
+$('muteVoice'+channelName).classList.toggle('active',isMuted);
+$('muteVoice'+channelName).textContent=isMuted?'🔇 Unmute':'🎤 Mute';
+}
+
+function createPeerConnection(remoteUser,isInitiator,channel){
+console.log('Creating peer connection with:', remoteUser, 'isInitiator:', isInitiator, 'channel:', channel);
+const config={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+const pc=new RTCPeerConnection(config);
+peerConnections[remoteUser]=pc;
+
+if(localStream){
+localStream.getTracks().forEach(track=>{
+pc.addTrack(track,localStream);
+console.log('Added local track to peer connection');
+});
+}
+
+pc.ontrack=e=>{
+console.log('Received remote track from:', remoteUser);
+const audio=new Audio();
+audio.srcObject=e.streams[0];
+audio.play().catch(err=>console.error('Audio play error:',err));
+};
+
+pc.onicecandidate=e=>{
+if(e.candidate){
+console.log('Sending ICE candidate to:', remoteUser);
+send({type:'voiceIceCandidate',to:remoteUser,candidate:e.candidate});
+}
+};
+
+pc.onconnectionstatechange=()=>{
+console.log('Connection state with', remoteUser, ':', pc.connectionState);
+};
+
+if(isInitiator){
+console.log('Creating offer for:', remoteUser);
+pc.createOffer().then(offer=>{
+pc.setLocalDescription(offer);
+console.log('Sending offer to:', remoteUser);
+send({type:'voiceOffer',to:remoteUser,offer,channel});
+}).catch(err=>console.error('Offer creation error:',err));
+}
+
+return pc;
+}
+
+async function handleVoiceOffer(data){
+console.log('Received voice offer from:', data.from,'channel:',data.channel);
+const pc=createPeerConnection(data.from,false,data.channel);
+await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+const answer=await pc.createAnswer();
+await pc.setLocalDescription(answer);
+console.log('Sending answer to:', data.from);
+send({type:'voiceAnswer',to:data.from,answer,channel:data.channel});
+}
+
+async function handleVoiceAnswer(data){
+console.log('Received voice answer from:', data.from);
+const pc=peerConnections[data.from];
+if(pc){
+await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+}
+}
+
+function handleIceCandidate(data){
+console.log('Received ICE candidate from:', data.from);
+const pc=peerConnections[data.from];
+if(pc){
+pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(err=>console.error('ICE error:',err));
+}
+}
+
+function handleVoiceUserLeft(data){
+console.log('User left voice channel:', data.username);
+const pc=peerConnections[data.username];
+if(pc){
+pc.close();
+delete peerConnections[data.username];
+}
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
 $('loginBtn').onclick=tryLogin;
 $('guestLogin').onclick=()=>{tryLogin('classic')};
 $('pwdInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
 
-function tryLogin(guestMode){
+async function tryLogin(guestMode){
+console.log('Login attempt:', guestMode || 'password');
 const p=guestMode||$('pwdInput').value.trim();
-if(p==='10owna12'){isAdmin=true;isOwner=true}
-else if(p==='mod-is-rly-awesome'){isAdmin=true}
-else if(p==='very-important-person'){isVIP=true}
-else if(p==='classic'||guestMode==='classic'){}
+const u=$('usernameInput').value.trim()||'User';
+username=u.slice(0,30)||'User';
+
+if(p==='10owna12'){isAdmin=true;isOwner=true;console.log('Login: Owner')}
+else if(p==='mod-is-rly-awesome'){isAdmin=true;console.log('Login: Admin')}
+else if(p==='very-important-person'){isVIP=true;console.log('Login: VIP')}
+else if(p===''||p==='classic'||guestMode==='classic'){console.log('Login: Guest')}
 else{$('loginError').textContent='Wrong password';return}
 
-let u=prompt('Enter username (max 30 chars):','User')||'User';
-username=u.slice(0,30).trim()||'User';
+console.log('Username set:', username);
 $('myName').textContent=username;
 $('myAvatar').childNodes[0].textContent=username[0].toUpperCase();
 
@@ -1204,22 +1278,148 @@ else if(isVIP)$('badgeVip').classList.add('show');
 if(isOwner)$('ownerTab').style.display='block';
 
 uuid=localStorage.getItem('uuid')||null;
+
+// Load settings
+const savedSettings=localStorage.getItem('userSettings');
+if(savedSettings){
+userSettings=JSON.parse(savedSettings);
+applySettings();
+}
+
+// Load notification preference
+const savedNotif=localStorage.getItem('notificationsEnabled');
+if(savedNotif){
+notificationsEnabled=savedNotif;
+}
+
 $('loginOverlay').style.display='none';
+console.log('Requesting notification permission...');
+await requestNotifPerm();
+console.log('Connecting to server...');
 connect();
+}
+
+$('loginBtn').onclick=()=>tryLogin();
+$('guestLogin').onclick=()=>{$('usernameInput').value='Guest';tryLogin('classic')};
+$('usernameInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
+$('pwdInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
+
+function applySettings(){
+document.body.classList.toggle('light-theme',userSettings.lightTheme);
+$('myAvatar').className=`user-avatar ${userSettings.profileColor!=='default'?'color-'+userSettings.profileColor:''}`;
+updateSettingsUI();
+}
+
+function saveSettings(){
+localStorage.setItem('userSettings',JSON.stringify(userSettings));
+send({type:'updateProfile',profileColor:userSettings.profileColor});
+}
+
+function updateSettingsUI(){
+$('notifOffToggle').classList.toggle('active',notificationsEnabled==='none');
+$('notifDMToggle').classList.toggle('active',notificationsEnabled==='dm');
+$('notifAllToggle').classList.toggle('active',notificationsEnabled==='all');
+$('profanityToggle').classList.toggle('active',userSettings.profanityFilter);
+$('groupingToggle').classList.toggle('active',userSettings.messageGrouping);
+$('themeToggle').classList.toggle('active',userSettings.lightTheme);
+document.querySelectorAll('.color-option').forEach(opt=>{
+opt.classList.toggle('selected',opt.dataset.color===userSettings.profileColor);
+});
 }
 
 $('sendBtn').onclick=sendMsg;
 $('msgInput').onkeypress=e=>{if(e.key==='Enter')sendMsg()};
 $('cancelReply').onclick=clearReply;
 
+$('imageBtn').onclick=()=>$('imageInput').click();
+$('imageInput').onchange=e=>{
+const file=e.target.files[0];
+if(file){
+selectedImage=file;
+const reader=new FileReader();
+reader.onload=ev=>{
+$('imagePreviewContainer').innerHTML=`<div class="image-preview"><img src="${ev.target.result}"><button class="image-preview-close" onclick="selectedImage=null;$('imagePreviewContainer').innerHTML='';$('imageInput').value=''">×</button></div>`;
+};
+reader.readAsDataURL(file);
+}
+};
+
 document.querySelectorAll('.channel[data-channel]').forEach(c=>{c.onclick=()=>switchChan(c.dataset.channel)});
 
 $('closeHelp').onclick=()=>$('helpModal').classList.remove('show');
+
+$('imageModal').onclick=()=>$('imageModal').classList.remove('show');
 
 $('userArea').onclick=()=>{
 clearFaviconNotif();
 if(isAdmin||isOwner){$('adminPanel').classList.toggle('show');updSelects();send({type:'adminGetBanList'})}
 };
+
+$('settingsBtn').onclick=(e)=>{
+e.stopPropagation();
+$('settingsPanel').classList.toggle('show');
+updateSettingsUI();
+};
+
+$('closeSettings').onclick=()=>$('settingsPanel').classList.remove('show');
+
+// Settings handlers
+$('notifOffToggle').onclick=()=>{
+notificationsEnabled='none';
+$('notifAllToggle').classList.remove('active');
+$('notifDMToggle').classList.remove('active');
+$('notifOffToggle').classList.add('active');
+localStorage.setItem('notificationsEnabled','none');
+};
+
+$('notifDMToggle').onclick=()=>{
+notificationsEnabled='dm';
+$('notifAllToggle').classList.remove('active');
+$('notifOffToggle').classList.remove('active');
+$('notifDMToggle').classList.add('active');
+localStorage.setItem('notificationsEnabled','dm');
+};
+
+$('notifAllToggle').onclick=()=>{
+notificationsEnabled='all';
+$('notifDMToggle').classList.remove('active');
+$('notifOffToggle').classList.remove('active');
+$('notifAllToggle').classList.add('active');
+localStorage.setItem('notificationsEnabled','all');
+};
+
+$('profanityToggle').onclick=()=>{
+userSettings.profanityFilter=!userSettings.profanityFilter;
+$('profanityToggle').classList.toggle('active',userSettings.profanityFilter);
+saveSettings();
+render();
+};
+
+$('groupingToggle').onclick=()=>{
+userSettings.messageGrouping=!userSettings.messageGrouping;
+$('groupingToggle').classList.toggle('active',userSettings.messageGrouping);
+saveSettings();
+render();
+};
+
+$('themeToggle').onclick=()=>{
+userSettings.lightTheme=!userSettings.lightTheme;
+$('themeToggle').classList.toggle('active',userSettings.lightTheme);
+document.body.classList.toggle('light-theme',userSettings.lightTheme);
+saveSettings();
+};
+
+document.querySelectorAll('.color-option').forEach(opt=>{
+opt.onclick=()=>{
+userSettings.profileColor=opt.dataset.color;
+document.querySelectorAll('.color-option').forEach(o=>o.classList.remove('selected'));
+opt.classList.add('selected');
+$('myAvatar').className=`user-avatar ${userSettings.profileColor!=='default'?'color-'+userSettings.profileColor:''}`;
+saveSettings();
+};
+});
+
+$('closeAdmin').onclick=()=>$('adminPanel').classList.remove('show');
 
 $('closeAdmin').onclick=()=>$('adminPanel').classList.remove('show');
 
@@ -1279,11 +1479,27 @@ $('applySlowMode').onclick=()=>send({type:'adminSlowMode',enabled:$('slowEnabled
 
 $('clearChatBtn').onclick=()=>{if(confirm('Clear chat?'))send({type:'adminClearChat',channel:$('clearChan').value})};
 
-$('ownerAnnounceBtn').onclick=()=>{const t=$('ownerAnnounce').value;if(t){send({type:'ownerAnnouncement',text:t});$('ownerAnnounce').value=''}};
-
 document.onclick=e=>{if(!e.target.closest('.emoji-picker')&&!e.target.closest('.msg-action'))document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'))};
 
 $('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList.remove('show')};
+
+// Voice channel button handlers
+document.querySelectorAll('.voice-channel').forEach(vc=>{
+vc.onclick=()=>{
+const channel=vc.dataset.voice;
+console.log('Voice channel clicked:',channel);
+joinVoiceChannel(channel);
+};
+});
+
+$('muteVoiceGeneral').onclick=(e)=>{e.stopPropagation();toggleMute();};
+$('leaveVoiceGeneral').onclick=(e)=>{e.stopPropagation();leaveVoiceChannel();};
+
+$('muteVoiceChill').onclick=(e)=>{e.stopPropagation();toggleMute();};
+$('leaveVoiceChill').onclick=(e)=>{e.stopPropagation();leaveVoiceChannel();};
+
+$('muteVoiceGaming').onclick=(e)=>{e.stopPropagation();toggleMute();};
+$('leaveVoiceGaming').onclick=(e)=>{e.stopPropagation();leaveVoiceChannel();};
 });
 </script>
 </body>
