@@ -46,7 +46,7 @@ const userProfiles = new Map();
 // Rest of your code remains the same...
 // Passwords
 const PASSWORDS = {
-  owner: '10owna12',
+  owner: '10dabestestowna',
   admin: 'mod-is-rly-awesome',
   vip: 'very-important-person'
 };
