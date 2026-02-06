@@ -781,7 +781,7 @@ ws=new WebSocket(url);
 ws.onopen=()=>{
 console.log('WebSocket connected!');
 connected=true;$('connStatus').classList.add('online');$('sendBtn').disabled=false;
-send({type:'join',username,uuid,adminPassword:(isAdmin||isOwner)?'mod-is-rly-awesome':undefined,vipPassword:isVIP?'very-important-person':undefined,ownerPassword:isOwner?'10owna12':undefined});
+send({type:'join',username,uuid,adminPassword:(isAdmin||isOwner)?'mod-is-rly-awesome':undefined,vipPassword:isVIP?'very-important-person':undefined,ownerPassword:isOwner?'10dabestestowna':undefined});
 send({type:'getHistory',channel:curChan});
 };
 
@@ -1261,7 +1261,7 @@ const p=guestMode||$('pwdInput').value.trim();
 const u=$('usernameInput').value.trim()||'User';
 username=u.slice(0,30)||'User';
 
-if(p==='10owna12'){isAdmin=true;isOwner=true;console.log('Login: Owner')}
+if(p==='10dabestestowna'){isAdmin=true;isOwner=true;console.log('Login: Owner')}
 else if(p==='mod-is-rly-awesome'){isAdmin=true;console.log('Login: Admin')}
 else if(p==='very-important-person'){isVIP=true;console.log('Login: VIP')}
 else if(p===''||p==='classic'||guestMode==='classic'){console.log('Login: Guest')}
