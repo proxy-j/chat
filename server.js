@@ -2,15 +2,56 @@ const WebSocket = require('ws');
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Parse JSON bodies
-app.use(express.json({ limit: '10mb' }));
+// Passwords (Environment variables with fallbacks)
+const PASSWORDS = {
+  owner: process.env.OWNER_PASSWORD || '10dabestestowna',
+  admin: process.env.ADMIN_PASSWORD || 'mod-is-rly-awesome',
+  vip: process.env.VIP_PASSWORD || 'very-important-person'
+};
 
-// Serve static files
+// Ensure uploads folder exists in public directory
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Middleware: Parse JSON up to 10MB for base64 image uploads
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Serve static web app files from "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Image upload API route
+app.post('/upload', (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'No image data provided' });
+    }
+
+    const matches = image.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
+    if (!matches) {
+      return res.status(400).json({ error: 'Invalid base64 image payload' });
+    }
+
+    const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+    const filename = `${crypto.randomBytes(8).toString('hex')}.${ext}`;
+    const filePath = path.join(uploadsDir, filename);
+
+    fs.writeFileSync(filePath, buffer);
+    return res.json({ url: `/uploads/${filename}` });
+  } catch (err) {
+    console.error('Image upload failed:', err);
+    return res.status(500).json({ error: 'Failed to process image' });
+  }
+});
 
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -20,7 +61,7 @@ const server = app.listen(PORT, () => {
 
 const wss = new WebSocket.Server({ server });
 
-// Data structures
+// Memory Data Structures
 const users = new Map();
 const connections = new Map();
 const channels = {
@@ -40,34 +81,27 @@ const voiceChannels = {
   chill: new Set(),
   gaming: new Set()
 };
-// ADD THIS LINE - this was missing!
 const userProfiles = new Map();
 
-// Rest of your code remains the same...
-// Passwords
-const PASSWORDS = {
-  owner: '10dabestestowna',
-  admin: 'mod-is-rly-awesome',
-  vip: 'very-important-person'
-};
-
-// Helper functions
+// Helper Functions
 function generateId() {
   return crypto.randomBytes(16).toString('hex');
 }
 
 function broadcast(data, exclude = null) {
+  const payload = JSON.stringify(data);
   connections.forEach((user, ws) => {
     if (ws !== exclude && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
+      ws.send(payload);
     }
   });
 }
 
 function sendToUser(uuid, data) {
+  const payload = JSON.stringify(data);
   connections.forEach((user, ws) => {
     if (user.uuid === uuid && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
+      ws.send(payload);
     }
   });
 }
@@ -110,9 +144,9 @@ function canModerate(moderator, target) {
   return false;
 }
 
-// WebSocket connection handler
+// WebSocket Connection Management
 wss.on('connection', (ws, req) => {
-  const clientIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+  const clientIP = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
   console.log(`New WebSocket connection from ${clientIP}`);
 
   if (bannedIPs.has(clientIP)) {
@@ -128,7 +162,6 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
-      console.log(`Received message type: ${data.type} from ${clientIP}`);
       handleMessage(ws, data, clientIP);
     } catch (error) {
       console.error('Error handling message:', error);
@@ -140,8 +173,8 @@ wss.on('connection', (ws, req) => {
     const user = connections.get(ws);
     if (user) {
       console.log(`User disconnected: ${user.username}`);
-      
-      // Remove from all voice channels
+
+      // Remove from voice channels
       Object.keys(voiceChannels).forEach(channel => {
         if (voiceChannels[channel].has(user.username)) {
           voiceChannels[channel].delete(user.username);
@@ -157,7 +190,7 @@ wss.on('connection', (ws, req) => {
           });
         }
       });
-      
+
       connections.delete(ws);
       broadcast({ type: 'userList', users: getUserList() });
     }
@@ -180,18 +213,18 @@ function handleMessage(ws, data, clientIP) {
     addReaction: handleAddReaction,
     removeReaction: handleRemoveReaction,
     typing: handleTyping,
-    
-    // Voice channel
+
+    // Voice WebRTC
     joinVoice: handleJoinVoice,
     leaveVoice: handleLeaveVoice,
     voiceOffer: handleVoiceOffer,
     voiceAnswer: handleVoiceAnswer,
     voiceIceCandidate: handleVoiceIceCandidate,
-    
-    // Profile
+
+    // Profile Settings
     updateProfile: handleUpdateProfile,
-    
-    // Admin commands
+
+    // Admin Commands
     adminKick: handleAdminKick,
     adminTimeout: handleAdminTimeout,
     adminBan: handleAdminBan,
@@ -223,6 +256,7 @@ function handleMessage(ws, data, clientIP) {
   }
 }
 
+// Handler Functions Implementation
 function handleJoin(ws, data, clientIP) {
   if (bannedUsers.has(data.username)) {
     ws.send(JSON.stringify({
@@ -234,7 +268,6 @@ function handleJoin(ws, data, clientIP) {
   }
 
   let uuid = data.uuid || generateId();
-  
   let isOwner = false;
   let isAdmin = false;
   let isVIP = false;
@@ -306,7 +339,7 @@ function handleChannelMessage(ws, data) {
 
   if (channels[data.channel]) {
     channels[data.channel].push(message);
-    
+
     if (channels[data.channel].length > 100) {
       channels[data.channel].shift();
     }
@@ -360,10 +393,8 @@ function handlePrivateChatRequest(ws, data) {
     return;
   }
 
-  // Check if chat already exists between these users
   for (const [chatId, participants] of privateChatParticipants.entries()) {
     if (participants.includes(user.uuid) && participants.includes(target.user.uuid)) {
-      // Chat already exists, notify both users
       ws.send(JSON.stringify({
         type: 'privateChatAccepted',
         chatId,
@@ -379,7 +410,6 @@ function handlePrivateChatRequest(ws, data) {
     }
   }
 
-  // No existing chat, send request to target
   target.ws.send(JSON.stringify({
     type: 'privateChatRequest',
     from: user.username,
@@ -555,11 +585,9 @@ function handleUpdateProfile(ws, data) {
   userProfiles.set(user.username, {
     profileColor: data.profileColor || 'default'
   });
-
-  console.log(`${user.username} updated profile color to ${data.profileColor}`);
 }
 
-// Voice channel handlers
+// Voice Channel Handlers
 function handleJoinVoice(ws, data) {
   const user = connections.get(ws);
   if (!user) return;
@@ -568,15 +596,12 @@ function handleJoinVoice(ws, data) {
   if (!voiceChannels[channel]) return;
 
   voiceChannels[channel].add(user.username);
-  
-  // Notify all users of updated voice channel
+
   broadcast({
     type: 'voiceUsers',
     users: Array.from(voiceChannels[channel]),
     channel
   });
-  
-  console.log(`${user.username} joined voice channel: ${channel}`);
 }
 
 function handleLeaveVoice(ws, data) {
@@ -587,21 +612,18 @@ function handleLeaveVoice(ws, data) {
   if (!voiceChannels[channel]) return;
 
   voiceChannels[channel].delete(user.username);
-  
-  // Notify all users
+
   broadcast({
     type: 'voiceUserLeft',
     username: user.username,
     channel
   });
-  
+
   broadcast({
     type: 'voiceUsers',
     users: Array.from(voiceChannels[channel]),
     channel
   });
-  
-  console.log(`${user.username} left voice channel: ${channel}`);
 }
 
 function handleVoiceOffer(ws, data) {
@@ -648,7 +670,7 @@ function handleVoiceIceCandidate(ws, data) {
   }
 }
 
-// Admin command handlers
+// Admin Commands
 function handleAdminKick(ws, data) {
   const admin = connections.get(ws);
   if (!admin || (!admin.isAdmin && !admin.isOwner)) return;
@@ -657,10 +679,7 @@ function handleAdminKick(ws, data) {
   if (!target) return;
 
   if (!canModerate(admin, target.user)) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: 'Cannot moderate this user'
-    }));
+    ws.send(JSON.stringify({ type: 'error', message: 'Cannot moderate this user' }));
     return;
   }
 
@@ -686,10 +705,7 @@ function handleAdminTimeout(ws, data) {
   if (!target) return;
 
   if (!canModerate(admin, target.user)) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: 'Cannot moderate this user'
-    }));
+    ws.send(JSON.stringify({ type: 'error', message: 'Cannot moderate this user' }));
     return;
   }
 
@@ -709,19 +725,16 @@ function handleAdminBan(ws, data) {
   if (!admin || (!admin.isAdmin && !admin.isOwner)) return;
 
   const target = getOnlineUserByUsername(data.targetUsername);
-  
+
   if (target && !canModerate(admin, target.user)) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: 'Cannot moderate this user'
-    }));
+    ws.send(JSON.stringify({ type: 'error', message: 'Cannot moderate this user' }));
     return;
   }
 
   if (data.banType === 'username' || data.banType === 'both') {
     bannedUsers.add(data.targetUsername);
   }
-  
+
   if (target && (data.banType === 'ip' || data.banType === 'both')) {
     bannedIPs.add(target.user.ip);
   }
@@ -772,10 +785,7 @@ function handleAdminForceMute(ws, data) {
   if (!target) return;
 
   if (!canModerate(admin, target.user)) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: 'Cannot moderate this user'
-    }));
+    ws.send(JSON.stringify({ type: 'error', message: 'Cannot moderate this user' }));
     return;
   }
 
@@ -798,10 +808,7 @@ function handleAdminWarning(ws, data) {
   if (!target) return;
 
   if (!canModerate(admin, target.user)) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: 'Cannot moderate this user'
-    }));
+    ws.send(JSON.stringify({ type: 'error', message: 'Cannot moderate this user' }));
     return;
   }
 
@@ -825,9 +832,7 @@ function handleAdminDeleteMessage(ws, data) {
   if (!admin || (!admin.isAdmin && !admin.isOwner)) return;
 
   if (channels[data.channel]) {
-    channels[data.channel] = channels[data.channel].filter(
-      m => m.id !== data.messageId
-    );
+    channels[data.channel] = channels[data.channel].filter(m => m.id !== data.messageId);
 
     broadcast({
       type: 'messageDeleted',
@@ -935,10 +940,7 @@ function handleAdminForceDisconnect(ws, data) {
   if (!target) return;
 
   if (!canModerate(admin, target.user)) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: 'Cannot moderate this user'
-    }));
+    ws.send(JSON.stringify({ type: 'error', message: 'Cannot moderate this user' }));
     return;
   }
 
@@ -950,5 +952,3 @@ function handleAdminForceDisconnect(ws, data) {
     message: `Disconnected ${data.targetUsername}`
   }));
 }
-
-console.log('WebSocket server is ready');
