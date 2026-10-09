@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
   },
   "devDependencies": {
-    "wrangler": "^3.80.0"
+    "wrangler": "^3.114.0"
   }
 }
