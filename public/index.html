@@ -954,7 +954,7 @@ const others=users.filter(u=>u.username!==username);
 const opts='<option value="">-- Select User --</option>'+others.map(u=>`<option value="${u.username}">${u.username}</option>`).join('');
 ['modUser','trollUser'].forEach(id=>{const el=$(id);if(el)el.innerHTML=opts});
 $('apUsers').innerHTML=others.length?others.map(u=>`<div class="ap-user"><div class="ap-user-info"><div class="ap-user-avatar">${u.username[0].toUpperCase()}</div><div class="ap-user-name">${u.username}</div></div><div class="ap-user-actions"><button class="ap-btn ap-btn-kick" onclick="send({type:'adminAction',targetUsername:'${u.username}',action:'kick'})">Kick</button><button class="ap-btn ap-btn-mute" onclick="send({type:'adminAction',targetUsername:'${u.username}',action:'mute'})">Mute</button><button class="ap-btn ap-btn-ban" onclick="quickBan('${u.username}')">Ban</button></div></div>`).join(''):'<div class="empty">No other users online</div>'};
-}
+
 
 function quickBan(username){
 if(confirm(`Ban ${username}?`)){
