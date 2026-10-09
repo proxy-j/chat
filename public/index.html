@@ -681,7 +681,7 @@ function filterProfanity(text) {
 
 document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
 
-aasync function requestNotifPerm(){
+async function requestNotifPerm(){
 if('Notification' in window&&Notification.permission==='default'){
 const perm=await Notification.requestPermission();
 notifPermission=perm==='granted';
@@ -872,7 +872,7 @@ broadcast:()=>notify('📢',d.message),
 adminActionSuccess:()=>notify('✅',d.message||'Done'),
 error:()=>notify('❌',d.message),
 forceMute:()=>{notify('🔇',`Muted for ${d.duration}s`);$('msgInput').disabled=true;$('sendBtn').disabled=true;setTimeout(()=>{$('msgInput').disabled=false;$('sendBtn').disabled=!connected},d.duration*1000)},
-banList:()=>{$('bannedUsers').innerHTML=d.bannedUsers.length?d.bannedUsers.map(u=>`<div class="ban-item"><span>${u}</span><button class="unban-btn" onclick="send({type:'adminUnban',username:'${u}'})">Unban</button></div>`).join(''):'<div class="empty">No banned usernames</div>'; $('bannedIPs').innerHTML=d.bannedIPs.length?d.bannedIPs.map(ip=>`<div class="ban-item"><span>${ip}</span><button class="unban-btn" onclick="send({type:'adminUnban',ip:'${ip}'})">Unban</button></div>`).join(''):'<div class="empty">No banned IPs</div>'},
+banList:()=>{$('bannedUsers').innerHTML=d.bannedUsers.length?d.bannedUsers.map(u=>`<div class="ban-item"><span>${u}</span><button class="unban-btn" onclick="send({type:'adminUnban',username:'${u}'})">Unban</button></div>`).join(''):'<div class="empty">No banned usernames</div>'; $('bannedIPs').innerHTML=d.bannedIPs.length?d.bannedIPs.map(ip=>`<div class="ban-item"><span>${ip}</span><button class="unban-btn" onclick="send({type:'adminUnbanIP',ip:'${ip}'})">Unban</button></div>`).join(''):'<div class="empty">No banned IPs</div>'},
 chatCleared:()=>{if(messages[d.channel])messages[d.channel]=[];if(d.channel===curChan)render()},
 messageDeleted:()=>{if(messages[d.channel]){messages[d.channel]=messages[d.channel].filter(m=>m.id!==d.messageId);if(d.channel===curChan)render()}},
 spinScreen:()=>{document.body.style.animation='spin 2s linear';setTimeout(()=>document.body.style.animation='',2000)},
@@ -1091,7 +1091,7 @@ username=$('usernameInput').value.trim();
 if(!username){$('loginError').textContent='Choose a username';return;}
 $('myName').textContent=username;
 $('myAvatar').textContent=username.charAt(0).toUpperCase();
-$('[id="loginOverlay"]').style.display='none';
+$('loginOverlay').style.display='none';
 connect();
 }
 
