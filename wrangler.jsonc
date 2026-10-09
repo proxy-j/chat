@@ -10,7 +10,8 @@
     "bindings": [
       {
         "name": "CHAT_ROOM",
-        "class_name": "ChatRoom"
+        "class_name": "ChatRoom",
+        "script_name": "chet"
       }
     ]
   },
