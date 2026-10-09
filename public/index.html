@@ -39,7 +39,7 @@ body.light-theme .notif-body{color:#2e3338}
 .sidebar{width:240px;background:#2f3136;display:flex;flex-direction:column}
 .sidebar.right{order:3;border-left:1px solid #202225;transition:transform .3s}
 .sidebar.right.collapsed{transform:translateX(240px)}
-.right-toggle{position:absolute;left:-36px;top:50%;transform:translateY(-50%);background:#2f3136;border:1px solid #202225;border-right:none;padding:8px;border-radius:4px 0 0 4px;cursor:pointer;color:#96989d;transition:color .2s}
+.right-toggle{position:absolute;left:-36px;top:50%;transform:translateY(-50%);background:#2f3136;border:1px solid #202225;border-right:none;padding:8px;border-radius:4px 0 0 4px;cursor:pointer;color:#96989d;transition:all .2s}
 .right-toggle:hover{color:#fff}
 .server-header{height:48px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #202225;color:#fff;font-weight:600;font-size:15px}
 .channels{flex:1;overflow-y:auto;padding:8px}
@@ -54,7 +54,7 @@ body.light-theme .notif-body{color:#2e3338}
 .channel.private .channel-name::before{content:'@';color:#5865f2}
 .unread-badge{background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;display:none}
 .channel.has-unread .unread-badge{display:block}
-.dm-badge{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}
+.dm-badge{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;display:block}
 .close-dm{opacity:0;background:none;border:none;color:#96989d;cursor:pointer;font-size:16px;transition:opacity .2s}
 .channel:hover .close-dm{opacity:1}
 .close-dm:hover{color:#ed4245}
@@ -97,7 +97,7 @@ body.light-theme .notif-body{color:#2e3338}
 .user-item:hover .dm-btn{opacity:1}
 .user-area{height:52px;background:#292b2f;padding:0 8px;display:flex;align-items:center;cursor:pointer;transition:background .2s;position:relative;gap:8px}
 .user-area:hover{background:#2a2d31}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:8px;font-size:14px;position:relative}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:8px;position:relative}
 .notif-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#ed4245;border:2px solid #292b2f;border-radius:50%;animation:pulse 2s infinite;display:none}
 .notif-dot.show{display:block}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
@@ -114,7 +114,7 @@ body.light-theme .notif-body{color:#2e3338}
 .notif-toggle.active{color:#3ba55d}
 .settings-btn{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;padding:4px;border-radius:4px;transition:all .2s;display:flex;align-items:center;justify-content:center}
 .settings-btn:hover{background:#3a3c42;color:#fff}
-#settingsPanel{position:fixed;bottom:60px;left:8px;width:400px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+#settingsPanel{position:fixed;bottom:60px;left:8px;width:400px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 #settingsPanel.show{display:flex}
 .settings-header{padding:12px 16px;border-bottom:1px solid #202225;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .settings-title{color:#fff;font-weight:600;font-size:14px}
@@ -152,7 +152,7 @@ body.light-theme .notif-body{color:#2e3338}
 .messages{flex:1;overflow-y:auto;padding:16px}
 .message{display:flex;padding:4px 0;margin-bottom:8px;position:relative;transition:background .15s}
 .message:hover{background:rgba(0,0,0,.1);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;border-radius:4px}
-.msg-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:16px;flex-shrink:0}
+.msg-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:12px;flex-shrink:0}
 .msg-avatar.color-red{background:linear-gradient(135deg,#ff6b6b,#ee5a6f)}
 .msg-avatar.color-orange{background:linear-gradient(135deg,#ffa500,#ff8c00)}
 .msg-avatar.color-yellow{background:linear-gradient(135deg,#ffd93d,#fcbf49)}
@@ -227,7 +227,7 @@ body.light-theme .notif-body{color:#2e3338}
 ::-webkit-scrollbar-track{background:#2f3136}
 ::-webkit-scrollbar-thumb{background:#202225;border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:#1a1c1f}
-#loginOverlay{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#1a1c20 0%,#2f3136 50%,#1a1c20 100%);display:flex;align-items:center;justify-content:center;flex-direction:column}
+#loginOverlay{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#1a1c20 0%,#2f3136 50%,#1a1c20 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
 .login-title{font-family:'Great Vibes',cursive;font-size:72px;color:#fff;margin-bottom:30px;text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3);animation:glow 2s ease-in-out infinite}
 @keyframes glow{0%,100%{text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3)}50%{text-shadow:0 0 30px rgba(88,101,242,.7),0 0 60px rgba(88,101,242,.5)}}
 #loginCard{width:320px;background:#2f3136;border:1px solid #202225;border-radius:8px;padding:24px;color:#fff;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
@@ -264,7 +264,7 @@ body.light-theme .notif-body{color:#2e3338}
 .btn-success:hover{background:#2d8659}
 .btn-danger{background:#ed4245;color:#fff}
 .btn-danger:hover{background:#c93b3e}
-#adminPanel{position:fixed;bottom:60px;left:8px;width:500px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+#adminPanel{position:fixed;bottom:60px;left:8px;width:500px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 #adminPanel.show{display:flex}
 .ap-header{padding:12px 16px;border-bottom:1px solid #202225;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .ap-title{color:#fff;font-weight:600;font-size:14px}
@@ -566,7 +566,7 @@ body.light-theme .notif-body{color:#2e3338}
 <div class="section-header">Voice Channels</div>
 <div class="voice-channel" data-voice="general">
 <span class="voice-channel-name">
-<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#dcddde;stroke-width:5;stroke-linejoin:round;fill:#dcddde;"/><path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" style="fill:none;stroke:#dcddde;stroke-width:5;stroke-linecap:round"/></svg>
+<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#fff;stroke-width:5;stroke-linejoin:round;fill:none"></path></svg>
 general
 </span>
 <span class="voice-status" id="voiceStatusGeneral">0 users</span>
@@ -579,7 +579,7 @@ general
 
 <div class="voice-channel" data-voice="chill">
 <span class="voice-channel-name">
-<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#dcddde;stroke-width:5;stroke-linejoin:round;fill:#dcddde;"/><path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" style="fill:none;stroke:#dcddde;stroke-width:5;stroke-linecap:round"/></svg>
+<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#fff;stroke-width:5;stroke-linejoin:round;fill:none"></path></svg>
 chill
 </span>
 <span class="voice-status" id="voiceStatusChill">0 users</span>
@@ -592,7 +592,7 @@ chill
 
 <div class="voice-channel" data-voice="gaming">
 <span class="voice-channel-name">
-<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#dcddde;stroke-width:5;stroke-linejoin:round;fill:#dcddde;"/><path d="M48,27.6a19.5,19.5 0 0 1 0,21.4M55.1,20.5a30,30 0 0 1 0,35.6M61.6,14a38.8,38.8 0 0 1 0,48.6" style="fill:none;stroke:#dcddde;stroke-width:5;stroke-linecap:round"/></svg>
+<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:#fff;stroke-width:5;stroke-linejoin:round;fill:none"></path></svg>
 gaming
 </span>
 <span class="voice-status" id="voiceStatusGaming">0 users</span>
@@ -666,10 +666,11 @@ const $=id=>document.getElementById(id);
 let hasUnread=false,isTabVisible=true,selectedBanType='ip',selectedImage=null,notifPermission=false,notificationsEnabled='all';
 let currentVoiceChannel=null,localStream=null,isMuted=false,peerConnections={},voiceChannelData={};
 let userSettings={profileColor:'default',profanityFilter:false,messageGrouping:false,lightTheme:false};
+const SOCKET_URL = new URLSearchParams(window.location.search).get('ws') || (['localhost','127.0.0.1'].includes(window.location.hostname) ? 'ws://localhost:8787' : 'wss://chet.jplevandoski.workers.dev');
 
 function filterProfanity(text) {
   if (!userSettings.profanityFilter) return text;
-  const badWords = ['fuck', 'shit', 'damn', 'ass', 'bitch', 'bastard', 'nigga', 'nigger', 'faggot', 'n1gga', 'n1gger', 'nigg@', 'n1gg@', '$hit', 'sh1t', '$h1t', 'a$s', 'as$', 'a$$', 'b1tch', 'fuk', 'fuc', 'cock', 'c0ck', 'dick', 'dik', 'dic', 'd1ck', 'd1k', 'd1c', 'cunt', 'tit', 't1t'];
+  const badWords = ['fuck','shit','damn','ass','bitch','bastard','nigga','nigger','faggot','n1gga','n1gger','nigg@','n1gg@','nigg@','n1gg@','$hit','sh1t','$h1t','a$s','as$','a$$','b1tch','fuk','fuking'];
   let filtered = text;
   badWords.forEach(word => {
     const regex = new RegExp(word, 'gi');
@@ -679,10 +680,8 @@ function filterProfanity(text) {
 }
 
 document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
-document.addEventListener('visibilitychange',()=>{isTabVisible=!document.hidden;if(isTabVisible){clearFaviconNotif()}});
 
-// Request notification permission
-async function requestNotifPerm(){
+aasync function requestNotifPerm(){
 if('Notification' in window&&Notification.permission==='default'){
 const perm=await Notification.requestPermission();
 notifPermission=perm==='granted';
@@ -691,7 +690,6 @@ notifPermission=true;
 }
 }
 
-// Show browser notification
 function showBrowserNotif(title,body,icon='💬'){
 if(notifPermission&&!isTabVisible&&notificationsEnabled){
 try{
@@ -718,8 +716,8 @@ const HELP_COMMANDS=[
 
 function updateFavicon(hasNotif){
 const fav=$('favicon');
-if(hasNotif){fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text><circle cx='85' cy='15' r='15' fill='%23ed4245'/></svg>"}
-else{fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text></svg>"}
+if(hasNotif){fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text><circle cx='85' cy='15' r='15' fill='%23ed4245'/><text x='85' y='22' text-anchor='middle' font-size='18' fill='white'>!</text></svg>";
+}else{fav.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text></svg>"}
 }
 
 function showFaviconNotif(){if(!isTabVisible){hasUnread=true;updateFavicon(true);$('notifDot').classList.add('show')}}
@@ -737,7 +735,6 @@ if(!acts)setTimeout(()=>n.remove(),4000);
 return n;
 }
 
-// Upload image - convert to base64 with compression
 async function uploadImage(file){
 return new Promise((resolve,reject)=>{
 const reader=new FileReader();
@@ -772,11 +769,8 @@ reader.readAsDataURL(file);
 }
 
 function connect(){
-const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-const host = location.host;
-const url = `${protocol}//${host}`;
-console.log('Attempting WebSocket connection to:', url);
-ws=new WebSocket(url);
+console.log('Attempting WebSocket connection to:', SOCKET_URL);
+ws = new WebSocket(SOCKET_URL);
 
 ws.onopen=()=>{
 console.log('WebSocket connected!');
@@ -878,7 +872,7 @@ broadcast:()=>notify('📢',d.message),
 adminActionSuccess:()=>notify('✅',d.message||'Done'),
 error:()=>notify('❌',d.message),
 forceMute:()=>{notify('🔇',`Muted for ${d.duration}s`);$('msgInput').disabled=true;$('sendBtn').disabled=true;setTimeout(()=>{$('msgInput').disabled=false;$('sendBtn').disabled=!connected},d.duration*1000)},
-banList:()=>{$('bannedUsers').innerHTML=d.bannedUsers.length?d.bannedUsers.map(u=>`<div class="ban-item"><span>${u}</span><button class="unban-btn" onclick="send({type:'adminUnban',username:'${u}'})">Unban</button></div>`).join(''):'<div class="empty">None</div>';$('bannedIPs').innerHTML=d.bannedIPs.length?d.bannedIPs.map(ip=>`<div class="ban-item"><span>${ip}</span><button class="unban-btn" onclick="send({type:'adminUnbanIP',ip:'${ip}'})">Unban</button></div>`).join(''):'<div class="empty">None</div>'},
+banList:()=>{$('bannedUsers').innerHTML=d.bannedUsers.length?d.bannedUsers.map(u=>`<div class="ban-item"><span>${u}</span><button class="unban-btn" onclick="send({type:'adminUnban',username:'${u}'})">Unban</button></div>`).join(''):'<div class="empty">No banned usernames</div>'; $('bannedIPs').innerHTML=d.bannedIPs.length?d.bannedIPs.map(ip=>`<div class="ban-item"><span>${ip}</span><button class="unban-btn" onclick="send({type:'adminUnban',ip:'${ip}'})">Unban</button></div>`).join(''):'<div class="empty">No banned IPs</div>'},
 chatCleared:()=>{if(messages[d.channel])messages[d.channel]=[];if(d.channel===curChan)render()},
 messageDeleted:()=>{if(messages[d.channel]){messages[d.channel]=messages[d.channel].filter(m=>m.id!==d.messageId);if(d.channel===curChan)render()}},
 spinScreen:()=>{document.body.style.animation='spin 2s linear';setTimeout(()=>document.body.style.animation='',2000)},
@@ -888,8 +882,8 @@ invertColors:()=>{document.body.style.filter='invert(1)';setTimeout(()=>document
 rainbow:()=>{document.body.style.animation='rainbow 2s infinite';setTimeout(()=>document.body.style.animation='',5000)},
 blur:()=>{document.body.style.filter='blur(5px)';setTimeout(()=>document.body.style.filter='',5000)},
 matrix:()=>{document.body.style.cssText='background:#000!important';setTimeout(()=>document.body.style.cssText='',5000)},
-emojiSpam:()=>{for(let i=0;i<20;i++)setTimeout(()=>{const e=document.createElement('div');e.textContent=['😂','🔥','💀','🎉'][Math.floor(Math.random()*4)];e.style.cssText=`position:fixed;font-size:48px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;pointer-events:none;z-index:9999`;document.body.appendChild(e);setTimeout(()=>e.remove(),2000)},i*100)},
-confetti:()=>{const cols=['#ff0','#f0f','#0ff','#f00','#0f0'];for(let i=0;i<50;i++)setTimeout(()=>{const c=document.createElement('div');c.className='confetti';c.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${cols[Math.floor(Math.random()*5)]}`;document.body.appendChild(c);setTimeout(()=>c.remove(),3000)},i*40)},
+emojiSpam:()=>{for(let i=0;i<20;i++)setTimeout(()=>{const e=document.createElement('div');e.textContent=['😂','🔥','💀','🎉'][Math.floor(Math.random()*4)];e.style.cssText=`position:fixed;left:${Math.random()*window.innerWidth}px;top:${Math.random()*window.innerHeight}px;font-size:${20+Math.random()*30}px;pointer-events:none;z-index:99999;`;document.body.appendChild(e);setTimeout(()=>e.remove(),1000)},i*80)},
+confetti:()=>{const cols=['#ff0','#f0f','#0ff','#f00','#0f0'];for(let i=0;i<50;i++)setTimeout(()=>{const c=document.createElement('div');c.className='confetti';c.style.cssText=`left:${Math.random()*window.innerWidth}px;background:${cols[Math.floor(Math.random()*cols.length)]};`;document.body.appendChild(c);setTimeout(()=>c.remove(),3000)},i*20)},
 rickRoll:()=>window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ','_blank'),
 forceDisconnect:()=>{alert('Disconnected by admin');ws.close()},
 voiceUsers:()=>{
@@ -959,7 +953,7 @@ function updSelects(){
 const others=users.filter(u=>u.username!==username);
 const opts='<option value="">-- Select User --</option>'+others.map(u=>`<option value="${u.username}">${u.username}</option>`).join('');
 ['modUser','trollUser'].forEach(id=>{const el=$(id);if(el)el.innerHTML=opts});
-$('apUsers').innerHTML=others.length?others.map(u=>`<div class="ap-user"><div class="ap-user-info"><div class="ap-user-avatar">${u.username[0].toUpperCase()}</div><div class="ap-user-name">${u.username}${u.isOwner?' <span class="role-badge owner">OWNER</span>':u.isAdmin?' <span class="role-badge admin">ADMIN</span>':u.isVIP?' <span class="role-badge vip">VIP</span>':''}</div></div><div class="ap-user-actions"><button class="ap-btn ap-btn-kick" onclick="send({type:'adminKick',targetUsername:'${u.username}'})">Kick</button><button class="ap-btn ap-btn-to" onclick="send({type:'adminTimeout',targetUsername:'${u.username}',duration:60})">TO</button><button class="ap-btn ap-btn-mute" onclick="send({type:'adminForceMute',targetUsername:'${u.username}',duration:60})">Mute</button><button class="ap-btn ap-btn-ban" onclick="quickBan('${u.username}')">Ban</button></div></div>`).join(''):'<div class="empty">No other users online</div>';
+$('apUsers').innerHTML=others.length?others.map(u=>`<div class="ap-user"><div class="ap-user-info"><div class="ap-user-avatar">${u.username[0].toUpperCase()}</div><div class="ap-user-name">${u.username}</div></div><div class="ap-user-actions"><button class="ap-btn ap-btn-kick" onclick="send({type:'adminAction',targetUsername:'${u.username}',action:'kick'})">Kick</button><button class="ap-btn ap-btn-mute" onclick="send({type:'adminAction',targetUsername:'${u.username}',action:'mute'})">Mute</button><button class="ap-btn ap-btn-ban" onclick="quickBan('${u.username}')">Ban</button></div></div>`).join(''):'<div class="empty">No other users online</div>'};
 }
 
 function quickBan(username){
@@ -969,7 +963,6 @@ send({type:'adminBan',targetUsername:username,banType:selectedBanType});
 }
 
 function reqDM(u){
-// Always send DM request
 send({type:'privateChatRequest',targetUsername:u});
 }
 
@@ -998,509 +991,186 @@ chatType='dm';curDM=id;
 $('curChan').textContent=name;$('curChan').classList.add('private');
 $('msgInput').placeholder=`Message @${name}`;
 document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
-document.querySelector(`[data-dm="${id}"]`)?.classList.add('active');
 if(!dmMessages[id])send({type:'getPrivateHistory',chatId:id});else render();
-unreadDMs[id]=0;
-updateDMBadge(id);
-clearFaviconNotif();
-}
-
-function showImageModal(url){
-const modal=$('imageModal');
-modal.querySelector('img').src=url;
-modal.classList.add('show');
+unreadDMs[id]=0;updateDMBadge(id);clearFaviconNotif();
 }
 
 function render(){
-const arr=chatType==='dm'?dmMessages[curDM]||[]:messages[curChan]||[];
-$('msgArea').innerHTML=arr.map((m,i)=>{
-const prevMsg=i>0?arr[i-1]:null;
-const isGrouped=userSettings.messageGrouping&&prevMsg&&prevMsg.author===m.author&&!m.replyTo&&!prevMsg.replyTo&&(m.timestamp-prevMsg.timestamp)<60000;
-
-const colorClass=m.profileColor?`color-${m.profileColor}`:'';
-const authorClass=m.isOwner?'owner':m.isAdmin?'admin':m.isVIP?'vip':'normal';
-const badge=m.isOwner?'<span class="role-badge owner">OWNER</span>':m.isAdmin?'<span class="role-badge admin">ADMIN</span>':m.isVIP?'<span class="role-badge vip">VIP</span>':'';
-const replyHtml=m.replyTo?`<div class="msg-reply"><span class="msg-reply-author">↩ ${m.replyTo.author}:</span> ${filterProfanity(m.replyTo.text)}</div>`:'';
-const imageHtml=m.imageUrl?`<img src="${m.imageUrl}" class="msg-image" onclick="showImageModal('${m.imageUrl}')" alt="Attached image">`:'';
-let reactHtml='';
-if(m.reactions&&Object.keys(m.reactions).length){
-reactHtml='<div class="reactions">'+Object.entries(m.reactions).map(([e,u])=>`<div class="reaction${u.includes(username)?' active':''}" onclick="${u.includes(username)?'remReact':'addReact'}('${m.id}','${e}')">${e}<span class="reaction-count">${u.length}</span></div>`).join('')+'</div>';
+const list=(chatType==='dm') ? (dmMessages[curDM]||[]) : (messages[curChan]||[]);
+$('msgArea').innerHTML='';
+if(!list.length){
+$('msgArea').innerHTML='<div class="empty">No messages yet.</div>';
+return;
 }
-const adminBtns=(isAdmin||isOwner)&&!m.isSystem?`<button class="msg-action" onclick="send({type:'adminDeleteMessage',messageId:'${m.id}',channel:'${m.channel||curChan}'})">🗑️</button>`:'';
-
-if(isGrouped){
-return `<div class="message grouped" data-id="${m.id}"><div class="msg-content"><div class="msg-text">${esc(filterProfanity(m.text))}</div>${imageHtml}${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
+let lastAuthor=null;
+list.forEach((m,i)=>{
+const isReply=m.replyTo && (chatType==='dm'?dmMessages[curDM]:messages[curChan])?.find(msg=>msg.id===m.replyTo);
+const msg=document.createElement('div');
+msg.className='message'+(lastAuthor===m.author?' grouped':'');
+if(lastAuthor===m.author){msg.classList.add('grouped');}
+const avatar=document.createElement('div');
+avatar.className='msg-avatar'+(m.color?` color-${m.color}`:'');
+avatar.textContent=(m.author||'U').charAt(0).toUpperCase();
+const content=document.createElement('div');
+content.className='msg-content';
+const header=document.createElement('div');
+header.className='msg-header';
+const author=document.createElement('span');
+author.className='msg-author'+(m.role?` ${m.role}`:' normal');
+author.textContent=m.author;
+const time=document.createElement('span');
+time.className='msg-time';
+time.textContent=new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+header.appendChild(author);header.appendChild(time);
+content.appendChild(header);
+if(isReply){
+const reply=document.createElement('div');
+reply.className='msg-reply';
+reply.innerHTML=`<span class="msg-reply-author">${isReply.author}</span>: ${isReply.imageUrl ? '[Image]' : isReply.text}`;
+content.appendChild(reply);
 }
-
-return `<div class="message" data-id="${m.id}"><div class="msg-avatar ${colorClass}">${m.author[0].toUpperCase()}</div><div class="msg-content">${replyHtml}<div class="msg-header"><span class="msg-author ${authorClass}">${m.author}</span>${badge}<span class="msg-time">${new Date(m.timestamp).toLocaleTimeString().slice(0,5)}</span></div><div class="msg-text">${esc(filterProfanity(m.text))}</div>${imageHtml}${reactHtml}</div><div class="msg-actions"><button class="msg-action" onclick='setReply(${JSON.stringify({id:m.id,author:m.author,text:m.text.slice(0,50)}).replace(/'/g,"&#39;")})'>↩</button><button class="msg-action" onclick="toggleEmoji('${m.id}')">😀</button>${adminBtns}</div><div class="emoji-picker" id="ep-${m.id}">${EMOJIS.map(e=>`<button onclick="addReact('${m.id}','${e}');toggleEmoji('${m.id}')">${e}</button>`).join('')}</div></div>`;
-}).join('');
+const text=document.createElement('div');
+text.className='msg-text';
+text.textContent=m.text||'';
+content.appendChild(text);
+if(m.imageUrl){
+const img=document.createElement('img');
+img.className='msg-image';
+img.src=m.imageUrl;img.alt='Message image';
+img.onclick=()=>{const modal=$('imageModal');modal.classList.add('show');modal.querySelector('img').src=m.imageUrl};
+content.appendChild(img);
+}
+const actions=document.createElement('div');
+actions.className='msg-actions';
+const replyBtn=document.createElement('button');
+replyBtn.className='msg-action';
+replyBtn.textContent='↩';
+replyBtn.onclick=()=>{replyTo=m; $('replyText').textContent=`Replying to ${m.author}`; $('replyBar').classList.add('show'); $('msgInput').focus();};
+actions.appendChild(replyBtn);
+const reactBtn=document.createElement('button');
+reactBtn.className='msg-action';
+reactBtn.textContent='😊';
+reactBtn.onclick=()=>showEmojiPicker(reactBtn,m.id);
+actions.appendChild(reactBtn);
+msg.appendChild(actions);
+msg.appendChild(avatar);
+msg.appendChild(content);
+if(m.reactions && m.reactions.length){
+const reactions=document.createElement('div');
+reactions.className='reactions';
+for(const r of m.reactions){
+const chip=document.createElement('button');
+chip.className='reaction'+(r.active?' active':'');
+chip.innerHTML=`<span>${r.emoji}</span><span class="reaction-count">${r.count}</span>`;
+chip.onclick=()=>send({type:'toggleReaction',messageId:m.id,emoji:r.emoji,isPrivate:chatType==='dm',channel:curChan,chatId:curDM});
+reactions.appendChild(chip);
+}
+content.appendChild(reactions);
+}
+$('msgArea').appendChild(msg);
+lastAuthor=m.author;
+});
 $('msgArea').scrollTop=$('msgArea').scrollHeight;
 }
 
-function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function toggleEmoji(id){document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'));$('ep-'+id)?.classList.toggle('show')}
-function addReact(id,e){send({type:'addReaction',messageId:id,emoji:e,channel:curChan,isPrivate:chatType==='dm',chatId:curDM})}
-function remReact(id,e){send({type:'removeReaction',messageId:id,emoji:e,channel:curChan,isPrivate:chatType==='dm',chatId:curDM})}
-function setReply(r){replyTo=r;$('replyText').innerHTML=`Replying to <b>${r.author}</b>`;$('replyBar').classList.add('show');$('msgInput').focus()}
-function clearReply(){replyTo=null;$('replyBar').classList.remove('show')}
-
-async function sendMsg(){
-const t=$('msgInput').value.trim();
-if((!t&&!selectedImage)||!connected)return;
-if(t.startsWith('/')){
-const cmd=t.split(' ')[0].toLowerCase();
-if(cmd==='/help'){
-showHelp();
-$('msgInput').value='';
-return;
-}
-}
-
-let imageUrl=null;
-if(selectedImage){
-$('sendBtn').disabled=true;
-try{
-imageUrl=await uploadImage(selectedImage);
-}catch(e){
-notify('❌','Failed to process image');
-}
-selectedImage=null;
-$('imagePreviewContainer').innerHTML='';
-$('imageInput').value='';
-$('sendBtn').disabled=false;
-if(!imageUrl&&!t)return;
-}
-
-if(chatType==='dm')send({type:'privateMessage',chatId:curDM,text:t||'',targetUsername:dmPartners[curDM],replyTo,imageUrl});
-else send({type:'message',channel:curChan,text:t||'',replyTo,imageUrl});
-$('msgInput').value='';
-clearReply();
-}
-
-function showHelp(){
-const html=HELP_COMMANDS.map(c=>`<div class="help-command"><div class="help-command-name">${c.name}</div><div class="help-command-desc">${c.desc}</div></div>`).join('');
-$('helpContent').innerHTML=html;
-$('helpModal').classList.add('show');
-}
-
-// Voice channel functions
-function updateVoiceUI(channel){
-const users=voiceChannelData[channel]||[];
-const channelName=channel.charAt(0).toUpperCase()+channel.slice(1);
-console.log('Updating voice UI for',channel,', users:', users);
-$('voiceStatus'+channelName).textContent=`${users.length} user${users.length!==1?'s':''}`;
-const participantsDiv=$('voiceParticipants'+channelName);
-if(users.length>0){
-participantsDiv.classList.add('show');
-participantsDiv.innerHTML=users.map(u=>`<div class="voice-participant">${u}</div>`).join('');
-}else{
-participantsDiv.classList.remove('show');
-}
-}
-
-async function joinVoiceChannel(channel){
-console.log('Attempting to join voice channel:',channel);
-if(currentVoiceChannel===channel){
-console.log('Already in this channel');
-return;
-}
-if(currentVoiceChannel){
-await leaveVoiceChannel();
-}
-try{
-console.log('Requesting microphone access...');
-localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-console.log('Microphone access granted');
-currentVoiceChannel=channel;
-const channelName=channel.charAt(0).toUpperCase()+channel.slice(1);
-$('voiceControls'+channelName).style.display='flex';
-document.querySelector(`[data-voice="${channel}"]`).classList.add('active');
-console.log('Sending joinVoice message');
-send({type:'joinVoice',username,channel});
-notify('🔊',`Joined ${channel} voice channel`);
-
-// Create peer connections for existing users
-const users=voiceChannelData[channel]||[];
-users.forEach(user=>{
-if(user!==username){
-console.log('Creating peer connection for:', user);
-createPeerConnection(user,true,channel);
-}
+function showEmojiPicker(btn,messageId){
+const picker=document.createElement('div');
+picker.className='emoji-picker show';
+EMOJIS.forEach(emoji=>{
+const b=document.createElement('button');
+b.textContent=emoji;
+b.onclick=()=>{send({type:'toggleReaction',messageId,emoji,isPrivate:chatType==='dm',channel:curChan,chatId:curDM});picker.remove();};
+picker.appendChild(b);
 });
-}catch(e){
-console.error('Microphone error:',e);
-notify('❌','Could not access microphone: '+e.message);
-}
+btn.parentElement.appendChild(picker);
+setTimeout(()=>document.addEventListener('click', function closePicker(e){if(!picker.contains(e.target)&&e.target!==btn){picker.remove();document.removeEventListener('click',closePicker);}}),0);
 }
 
-function leaveVoiceChannel(){
-console.log('Leaving voice channel...');
-if(localStream){
-localStream.getTracks().forEach(track=>track.stop());
-localStream=null;
-console.log('Stopped local stream');
-}
-Object.values(peerConnections).forEach(pc=>pc.close());
-peerConnections={};
-if(currentVoiceChannel){
-const channelName=currentVoiceChannel.charAt(0).toUpperCase()+currentVoiceChannel.slice(1);
-$('voiceControls'+channelName).style.display='none';
-document.querySelector(`[data-voice="${currentVoiceChannel}"]`).classList.remove('active');
-$('muteVoice'+channelName).classList.remove('active');
-$('muteVoice'+channelName).textContent='🎤 Mute';
-send({type:'leaveVoice',channel:currentVoiceChannel});
-}
-isMuted=false;
-currentVoiceChannel=null;
-notify('🔇','Left voice channel');
-console.log('Left voice channel');
-}
-
-function toggleMute(){
-console.log('Toggle mute, current state:', isMuted);
-if(!localStream||!currentVoiceChannel){
-console.log('No local stream or channel');
-return;
-}
-isMuted=!isMuted;
-localStream.getAudioTracks().forEach(track=>{
-track.enabled=!isMuted;
-console.log('Track enabled:', track.enabled);
-});
-const channelName=currentVoiceChannel.charAt(0).toUpperCase()+currentVoiceChannel.slice(1);
-$('muteVoice'+channelName).classList.toggle('active',isMuted);
-$('muteVoice'+channelName).textContent=isMuted?'🔇 Unmute':'🎤 Mute';
-}
-
-function createPeerConnection(remoteUser,isInitiator,channel){
-console.log('Creating peer connection with:', remoteUser, 'isInitiator:', isInitiator, 'channel:', channel);
-const config={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
-const pc=new RTCPeerConnection(config);
-peerConnections[remoteUser]=pc;
-
-if(localStream){
-localStream.getTracks().forEach(track=>{
-pc.addTrack(track,localStream);
-console.log('Added local track to peer connection');
-});
-}
-
-pc.ontrack=e=>{
-console.log('Received remote track from:', remoteUser);
-const audio=new Audio();
-audio.srcObject=e.streams[0];
-audio.play().catch(err=>console.error('Audio play error:',err));
-};
-
-pc.onicecandidate=e=>{
-if(e.candidate){
-console.log('Sending ICE candidate to:', remoteUser);
-send({type:'voiceIceCandidate',to:remoteUser,candidate:e.candidate});
-}
-};
-
-pc.onconnectionstatechange=()=>{
-console.log('Connection state with', remoteUser, ':', pc.connectionState);
-};
-
-if(isInitiator){
-console.log('Creating offer for:', remoteUser);
-pc.createOffer().then(offer=>{
-pc.setLocalDescription(offer);
-console.log('Sending offer to:', remoteUser);
-send({type:'voiceOffer',to:remoteUser,offer,channel});
-}).catch(err=>console.error('Offer creation error:',err));
-}
-
-return pc;
-}
-
-async function handleVoiceOffer(data){
-console.log('Received voice offer from:', data.from,'channel:',data.channel);
-const pc=createPeerConnection(data.from,false,data.channel);
-await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-const answer=await pc.createAnswer();
-await pc.setLocalDescription(answer);
-console.log('Sending answer to:', data.from);
-send({type:'voiceAnswer',to:data.from,answer,channel:data.channel});
-}
-
-async function handleVoiceAnswer(data){
-console.log('Received voice answer from:', data.from);
-const pc=peerConnections[data.from];
-if(pc){
-await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-}
-}
-
-function handleIceCandidate(data){
-console.log('Received ICE candidate from:', data.from);
-const pc=peerConnections[data.from];
-if(pc){
-pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(err=>console.error('ICE error:',err));
-}
-}
-
-function handleVoiceUserLeft(data){
-console.log('User left voice channel:', data.username);
-const pc=peerConnections[data.username];
-if(pc){
-pc.close();
-delete peerConnections[data.username];
-}
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
-$('loginBtn').onclick=tryLogin;
-$('guestLogin').onclick=()=>{tryLogin('classic')};
-$('pwdInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
-
-async function tryLogin(guestMode){
-console.log('Login attempt:', guestMode || 'password');
-const p=guestMode||$('pwdInput').value.trim();
-const u=$('usernameInput').value.trim()||'User';
-username=u.slice(0,30)||'User';
-
-if(p==='10dabestestowna'){isAdmin=true;isOwner=true;console.log('Login: Owner')}
-else if(p==='mod-is-rly-awesome'){isAdmin=true;console.log('Login: Admin')}
-else if(p==='very-important-person'){isVIP=true;console.log('Login: VIP')}
-else if(p===''||p==='classic'||guestMode==='classic'){console.log('Login: Guest')}
-else{$('loginError').textContent='Wrong password';return}
-
-console.log('Username set:', username);
+function login(){
+username=$('usernameInput').value.trim();
+if(!username){$('loginError').textContent='Choose a username';return;}
 $('myName').textContent=username;
-$('myAvatar').childNodes[0].textContent=username[0].toUpperCase();
-
-if(isOwner)$('badgeOwner').classList.add('show');
-else if(isAdmin)$('badgeAdmin').classList.add('show');
-else if(isVIP)$('badgeVip').classList.add('show');
-
-if(isOwner)$('ownerTab').style.display='block';
-
-uuid=localStorage.getItem('uuid')||null;
-
-// Load settings
-const savedSettings=localStorage.getItem('userSettings');
-if(savedSettings){
-userSettings=JSON.parse(savedSettings);
-applySettings();
-}
-
-// Load notification preference
-const savedNotif=localStorage.getItem('notificationsEnabled');
-if(savedNotif){
-notificationsEnabled=savedNotif;
-}
-
-$('loginOverlay').style.display='none';
-console.log('Requesting notification permission...');
-await requestNotifPerm();
-console.log('Connecting to server...');
+$('myAvatar').textContent=username.charAt(0).toUpperCase();
+$('[id="loginOverlay"]').style.display='none';
 connect();
 }
 
-$('loginBtn').onclick=()=>tryLogin();
-$('guestLogin').onclick=()=>{$('usernameInput').value='Guest';tryLogin('classic')};
-$('usernameInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
-$('pwdInput').onkeypress=e=>{if(e.key==='Enter')tryLogin()};
-
-function applySettings(){
-document.body.classList.toggle('light-theme',userSettings.lightTheme);
-$('myAvatar').className=`user-avatar ${userSettings.profileColor!=='default'?'color-'+userSettings.profileColor:''}`;
-updateSettingsUI();
+$('loginBtn').onclick=login;
+$('guestLogin').onclick=()=>{ $('usernameInput').value='Guest'; login(); };
+$('msgInput').addEventListener('keydown',e=>{
+if(e.key==='Enter'&&!e.shiftKey){
+ e.preventDefault();
+ sendMessage();
 }
-
-function saveSettings(){
-localStorage.setItem('userSettings',JSON.stringify(userSettings));
-send({type:'updateProfile',profileColor:userSettings.profileColor});
-}
-
-function updateSettingsUI(){
-$('notifOffToggle').classList.toggle('active',notificationsEnabled==='none');
-$('notifDMToggle').classList.toggle('active',notificationsEnabled==='dm');
-$('notifAllToggle').classList.toggle('active',notificationsEnabled==='all');
-$('profanityToggle').classList.toggle('active',userSettings.profanityFilter);
-$('groupingToggle').classList.toggle('active',userSettings.messageGrouping);
-$('themeToggle').classList.toggle('active',userSettings.lightTheme);
-document.querySelectorAll('.color-option').forEach(opt=>{
-opt.classList.toggle('selected',opt.dataset.color===userSettings.profileColor);
 });
+
+function sendMessage(){
+const text=$('msgInput').value.trim();
+if(!text && !selectedImage)return;
+const payload={type:'message',channel:curChan,text:filterProfanity(text),username,replyTo:replyTo?.id || null};
+if(chatType==='dm'){payload.type='privateMessage';payload.chatId=curDM;payload.text=filterProfanity(text);}
+if(selectedImage){payload.imageUrl=selectedImage;selectedImage=null;clearImagePreview();}
+if(replyTo){payload.replyTo=replyTo.id;replyTo=null;$('replyBar').classList.remove('show');$('replyText').textContent='';}
+if(chatType==='dm'){
+ send({type:'privateMessage',chatId:curDM,text:filterProfanity(text),imageUrl:selectedImage||undefined,replyTo:replyTo?.id||null,username});
+} else {
+ send({type:'message',channel:curChan,text:filterProfanity(text),imageUrl:selectedImage||undefined,replyTo:replyTo?.id||null,username});
+}
+$('msgInput').value='';
+if(selectedImage){clearImagePreview();}
 }
 
-$('sendBtn').onclick=sendMsg;
-$('msgInput').onkeypress=e=>{if(e.key==='Enter')sendMsg()};
-$('cancelReply').onclick=clearReply;
+$('sendBtn').onclick=sendMessage;
+
+function clearImagePreview(){
+selectedImage=null;
+$('imagePreviewContainer').innerHTML='';
+}
 
 $('imageBtn').onclick=()=>$('imageInput').click();
-$('imageInput').onchange=e=>{
+$('imageInput').addEventListener('change',async e=>{
 const file=e.target.files[0];
-if(file){
-selectedImage=file;
-const reader=new FileReader();
-reader.onload=ev=>{
-$('imagePreviewContainer').innerHTML=`<div class="image-preview"><img src="${ev.target.result}"><button class="image-preview-close" onclick="selectedImage=null;$('imagePreviewContainer').innerHTML='';$('imageInput').value=''">×</button></div>`;
-};
-reader.readAsDataURL(file);
-}
-};
+if(!file)return;
+selectedImage=await uploadImage(file);
+const preview=document.createElement('div');
+preview.className='image-preview';
+preview.innerHTML=`<img src="${selectedImage}" alt="Selected preview"> <button class="image-preview-close" title="Remove">×</button>`;
+preview.querySelector('.image-preview-close').onclick=()=>{clearImagePreview();};
+$('imagePreviewContainer').innerHTML='';
+$('imagePreviewContainer').appendChild(preview);
+});
 
-document.querySelectorAll('.channel[data-channel]').forEach(c=>{c.onclick=()=>switchChan(c.dataset.channel)});
-
-$('closeHelp').onclick=()=>$('helpModal').classList.remove('show');
-
+$('closeSettings').onclick=()=>{$('settingsPanel').classList.remove('show')};
+$('settingsBtn').onclick=()=>{$('settingsPanel').classList.toggle('show')};
+$('closeAdmin').onclick=()=>{$('adminPanel').classList.remove('show')};
+$('cancelReply').onclick=()=>{replyTo=null;$('replyBar').classList.remove('show');$('replyText').textContent='';};
 $('imageModal').onclick=()=>$('imageModal').classList.remove('show');
 
-$('userArea').onclick=()=>{
-clearFaviconNotif();
-if(isAdmin||isOwner){$('adminPanel').classList.toggle('show');updSelects();send({type:'adminGetBanList'})}
-};
-
-$('settingsBtn').onclick=(e)=>{
-e.stopPropagation();
-$('settingsPanel').classList.toggle('show');
-updateSettingsUI();
-};
-
-$('closeSettings').onclick=()=>$('settingsPanel').classList.remove('show');
-
-// Settings handlers
-$('notifOffToggle').onclick=()=>{
-notificationsEnabled='none';
-$('notifAllToggle').classList.remove('active');
-$('notifDMToggle').classList.remove('active');
-$('notifOffToggle').classList.add('active');
-localStorage.setItem('notificationsEnabled','none');
-};
-
-$('notifDMToggle').onclick=()=>{
-notificationsEnabled='dm';
-$('notifAllToggle').classList.remove('active');
-$('notifOffToggle').classList.remove('active');
-$('notifDMToggle').classList.add('active');
-localStorage.setItem('notificationsEnabled','dm');
-};
-
-$('notifAllToggle').onclick=()=>{
-notificationsEnabled='all';
-$('notifDMToggle').classList.remove('active');
-$('notifOffToggle').classList.remove('active');
-$('notifAllToggle').classList.add('active');
-localStorage.setItem('notificationsEnabled','all');
-};
-
-$('profanityToggle').onclick=()=>{
-userSettings.profanityFilter=!userSettings.profanityFilter;
-$('profanityToggle').classList.toggle('active',userSettings.profanityFilter);
-saveSettings();
-render();
-};
-
-$('groupingToggle').onclick=()=>{
-userSettings.messageGrouping=!userSettings.messageGrouping;
-$('groupingToggle').classList.toggle('active',userSettings.messageGrouping);
-saveSettings();
-render();
-};
-
-$('themeToggle').onclick=()=>{
-userSettings.lightTheme=!userSettings.lightTheme;
-$('themeToggle').classList.toggle('active',userSettings.lightTheme);
-document.body.classList.toggle('light-theme',userSettings.lightTheme);
-saveSettings();
-};
-
-document.querySelectorAll('.color-option').forEach(opt=>{
-opt.onclick=()=>{
-userSettings.profileColor=opt.dataset.color;
-document.querySelectorAll('.color-option').forEach(o=>o.classList.remove('selected'));
-opt.classList.add('selected');
-$('myAvatar').className=`user-avatar ${userSettings.profileColor!=='default'?'color-'+userSettings.profileColor:''}`;
-saveSettings();
-};
-});
-
-$('closeAdmin').onclick=()=>$('adminPanel').classList.remove('show');
-
-$('closeAdmin').onclick=()=>$('adminPanel').classList.remove('show');
-
-$('rightToggle').onclick=()=>{
-$('rightSidebar').classList.toggle('collapsed');
-$('rightToggle').textContent=$('rightSidebar').classList.contains('collapsed')?'◀':'▶';
-};
-
-document.querySelectorAll('.ap-tab').forEach(tab=>{
-tab.onclick=()=>{
-document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
-document.querySelectorAll('.ap-section').forEach(s=>s.classList.remove('active'));
-tab.classList.add('active');
-const sec=document.querySelector(`.ap-section[data-section="${tab.dataset.tab}"]`);
-if(sec)sec.classList.add('active');
+document.body.addEventListener('click',e=>{
+const toggle=e.target.closest('[data-tab]');
+if(toggle){
+ document.querySelectorAll('.ap-tab').forEach(tab=>tab.classList.toggle('active',tab===toggle));
+ document.querySelectorAll('.ap-section').forEach(section=>section.classList.toggle('active',section.dataset.section===toggle.dataset.tab));
 }
 });
 
-document.querySelectorAll('.ban-type-btn').forEach(btn=>{
-btn.onclick=()=>{
-document.querySelectorAll('.ban-type-btn').forEach(b=>b.classList.remove('selected'));
-btn.classList.add('selected');
-selectedBanType=btn.dataset.type;
+$('rightToggle').onclick=()=>document.getElementById('rightSidebar').classList.toggle('collapsed');
+
+window.addEventListener('load',()=>{
+const savedUuid=localStorage.getItem('uuid');
+if(savedUuid){uuid=savedUuid;}
+const usernameFromStorage=localStorage.getItem('username');
+if(usernameFromStorage){$('usernameInput').value=usernameFromStorage;}
+});
+
+window.addEventListener('beforeunload',()=>{
+if(username) localStorage.setItem('username', username);
+});
+
+if (window.location.search.includes('guest=true')) {
+  $('usernameInput').value = 'Guest';
+  login();
 }
-});
-
-$('modAction').onchange=()=>{
-const action=$('modAction').value;
-$('banTypeSelector').style.display=action==='ban'?'flex':'none';
-};
-
-$('execMod').onclick=()=>{
-const u=$('modUser').value,a=$('modAction').value,d=parseInt($('modDur').value)||60,r=$('modReason').value;
-if(!u)return notify('❌','Select user');
-if(a==='kick')send({type:'adminKick',targetUsername:u,reason:r});
-else if(a==='timeout')send({type:'adminTimeout',targetUsername:u,duration:d,reason:r});
-else if(a==='mute')send({type:'adminForceMute',targetUsername:u,duration:d});
-else if(a==='ban')send({type:'adminBan',targetUsername:u,banType:selectedBanType,reason:r});
-else if(a==='warning')send({type:'adminWarning',targetUsername:u,reason:r||'Warning'});
-};
-
-document.querySelectorAll('[data-troll]').forEach(b=>{
-b.onclick=()=>{
-const u=$('trollUser').value;if(!u)return notify('❌','Select user');
-const t=b.dataset.troll;
-send({type:'admin'+t.charAt(0).toUpperCase()+t.slice(1),targetUsername:u});
-}
-});
-
-$('confettiAll').onclick=()=>send({type:'adminConfetti'});
-
-$('sendBroadcast').onclick=()=>{const m=$('broadcastMsg').value;if(m){send({type:'adminBroadcast',message:m});$('broadcastMsg').value=''}};
-
-$('refreshBans').onclick=()=>send({type:'adminGetBanList'});
-
-$('applySlowMode').onclick=()=>send({type:'adminSlowMode',enabled:$('slowEnabled').checked,duration:parseInt($('slowDur').value)||5});
-
-$('clearChatBtn').onclick=()=>{if(confirm('Clear chat?'))send({type:'adminClearChat',channel:$('clearChan').value})};
-
-document.onclick=e=>{if(!e.target.closest('.emoji-picker')&&!e.target.closest('.msg-action'))document.querySelectorAll('.emoji-picker').forEach(p=>p.classList.remove('show'))};
-
-$('helpModal').onclick=e=>{if(e.target===$('helpModal'))$('helpModal').classList.remove('show')};
-
-// Voice channel button handlers
-document.querySelectorAll('.voice-channel').forEach(vc=>{
-vc.onclick=()=>{
-const channel=vc.dataset.voice;
-console.log('Voice channel clicked:',channel);
-joinVoiceChannel(channel);
-};
-});
-
-$('muteVoiceGeneral').onclick=(e)=>{e.stopPropagation();toggleMute();};
-$('leaveVoiceGeneral').onclick=(e)=>{e.stopPropagation();leaveVoiceChannel();};
-
-$('muteVoiceChill').onclick=(e)=>{e.stopPropagation();toggleMute();};
-$('leaveVoiceChill').onclick=(e)=>{e.stopPropagation();leaveVoiceChannel();};
-
-$('muteVoiceGaming').onclick=(e)=>{e.stopPropagation();toggleMute();};
-$('leaveVoiceGaming').onclick=(e)=>{e.stopPropagation();leaveVoiceChannel();};
-});
 </script>
 </body>
 </html>
