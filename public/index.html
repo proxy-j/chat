@@ -1,12 +1,303 @@
-<script>
-const EMOJIS=['👍','👎','❤️','😂','😮','😢','🔥','🎉','👀','💯'];
-let ws,connected=false,username='',uuid=null,isAdmin=false,isVIP=false,isOwner=false;
-let curChan='general',chatType='channel',curDM=null,replyTo=null;
-const messages={},dmMessages={},dmPartners={},users=[],unreadChannels={},unreadDMs={};
-const $=id=>document.getElementById(id);
-let hasUnread=false,isTabVisible=true,selectedBanType='ip',selectedImage=null,notifPermission=false,notificationsEnabled='all';
-let currentVoiceChannel=null,localStream=null,isMuted=false,peerConnections={},voiceChannelData={};
-let userSettings={profileColor:'default',profanityFilter:false,messageGrouping:false,lightTheme:false};
-const WEBSOCKET_URL = window.WS_SERVER_URL || 'wss://chet.jplevandoski.workers.dev';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Chet</title>
+  <style>
+    :root {
+      --bg: #1b1d22;
+      --panel: #2b2f36;
+      --panel-2: #363b45;
+      --text: #f3f4f6;
+      --muted: #a3a9b5;
+      --accent: #5865f2;
+      --accent-2: #4752c4;
+      --danger: #ed4245;
+      --success: #3ba55d;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Arial, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; }
+    .app {
+      width: min(980px, 96vw);
+      height: min(700px, 90vh);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      overflow: hidden;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.38);
+    }
+    .sidebar {
+      width: 260px;
+      background: var(--panel-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+    .channel-list { padding: 12px; flex: 1; }
+    .channel {
+      padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; color: var(--muted); cursor: pointer; font-weight: 600;
+    }
+    .channel.active { background: rgba(88,101,242,0.24); color: var(--text); }
+    .chat {
+      flex: 1; display: flex; flex-direction: column; background: #2a2d33;
+    }
+    .chat-header {
+      height: 64px; display: flex; align-items: center; padding: 0 18px; border-bottom: 1px solid var(--border); font-size: 1.1rem; font-weight: 700;
+    }
+    .messages { flex: 1; padding: 18px; overflow-y: auto; }
+    .message {
+      margin-bottom: 12px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.03);
+    }
+    .meta {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 4px; font-size: 0.85rem; color: var(--muted);
+    }
+    .author { color: #dbe1ff; font-weight: 700; }
+    .text { white-space: pre-wrap; line-height: 1.45; }
+    .composer {
+      border-top: 1px solid var(--border); padding: 12px 14px; display: flex; gap: 10px; align-items: center;
+    }
+    input[type="text"] {
+      flex: 1; height: 44px; border-radius: 10px; border: 1px solid var(--border); background: #1e2127; color: var(--text); padding: 0 14px; font-size: 1rem;
+    }
+    button {
+      height: 44px; border: none; border-radius: 10px; cursor: pointer; background: var(--accent); color: white; font-weight: 700; padding: 0 18px;
+    }
+    button:hover { background: var(--accent-2); }
+    .status { margin-left: auto; padding-right: 8px; color: var(--muted); font-size: 0.85rem; }
+    .online { color: var(--success); }
+    .offline { color: var(--danger); }
+    .login {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6);
+    }
+    .login-card {
+      width: 360px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .login-card h2 { margin-top: 0; }
+    .login-card input {
+      width: 100%; margin: 10px 0; height: 44px; border-radius: 10px; border: 1px solid var(--border); background: #1e2127; color: var(--text); padding: 0 12px; font-size: 1rem;
+    }
+    .login-card button { width: 100%; margin-top: 8px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">The Chet</div>
+      <div class="channel-list" id="channels">
+        <div class="channel active" data-channel="general"># general</div>
+        <div class="channel" data-channel="gaming"># gaming</div>
+        <div class="channel" data-channel="memes"># memes</div>
+      </div>
+    </aside>
 
-function filterProfanity(text) {
+    <main class="chat">
+      <div class="chat-header">
+        <span id="channelName"># general</span>
+        <span class="status offline" id="connectionStatus">offline</span>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="composer">
+        <input id="messageInput" type="text" placeholder="Type a message..." />
+        <button id="sendBtn">Send</button>
+      </div>
+    </main>
+  </div>
+
+  <div class="login" id="loginScreen">
+    <div class="login-card">
+      <h2>Welcome to The Chet</h2>
+      <input id="usernameInput" type="text" placeholder="Username" maxlength="24" />
+      <input id="passwordInput" type="password" placeholder="Password (optional)" />
+      <button id="joinBtn">Join</button>
+    </div>
+  </div>
+
+  <script>
+    const WEBSOCKET_URL = 'wss://chet.jplevandoski.workers.dev';
+    const channels = document.getElementById('channels');
+    const messagesEl = document.getElementById('messages');
+    const channelNameEl = document.getElementById('channelName');
+    const connectionStatusEl = document.getElementById('connectionStatus');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const loginScreen = document.getElementById('loginScreen');
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const joinBtn = document.getElementById('joinBtn');
+
+    let ws = null;
+    let connected = false;
+    let username = '';
+    let currentChannel = 'general';
+    let history = {};
+
+    function addMessage(author, text, kind = 'normal') {
+      const row = document.createElement('div');
+      row.className = 'message';
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML = `<span class="author">${author}</span><span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
+      const body = document.createElement('div');
+      body.className = 'text';
+      body.textContent = text;
+      row.appendChild(meta);
+      row.appendChild(body);
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function renderMessages() {
+      const list = history[currentChannel] || [];
+      messagesEl.innerHTML = '';
+      list.forEach(msg => addMessage(msg.author, msg.text));
+    }
+
+    function setStatus(online) {
+      if (online) {
+        connectionStatusEl.textContent = 'online';
+        connectionStatusEl.classList.add('online');
+        connectionStatusEl.classList.remove('offline');
+      } else {
+        connectionStatusEl.textContent = 'offline';
+        connectionStatusEl.classList.add('offline');
+        connectionStatusEl.classList.remove('online');
+      }
+    }
+
+    function connect() {
+      const url = WEBSOCKET_URL;
+      console.log('Connecting to WebSocket:', url);
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        connected = true;
+        setStatus(true);
+        send({ type: 'join', username, channel: currentChannel });
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('Incoming message:', data);
+
+          if (data.type === 'history') {
+            history[data.channel] = data.messages || [];
+            renderMessages();
+            return;
+          }
+
+          if (data.type === 'message') {
+            if (!history[data.channel]) history[data.channel] = [];
+            history[data.channel].push({ author: data.author, text: data.text });
+            if (data.channel === currentChannel) renderMessages();
+            return;
+          }
+
+          if (data.type === 'system') {
+            addMessage('system', data.text);
+            return;
+          }
+
+          if (data.type === 'error') {
+            addMessage('system', data.message || 'Error');
+          }
+        } catch (err) {
+          console.error('Failed to parse socket payload:', err);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        setStatus(false);
+      };
+
+      ws.onclose = () => {
+        connected = false;
+        setStatus(false);
+        setTimeout(connect, 3000);
+      };
+    }
+
+    function send(payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
+    }
+
+    function switchChannel(channel) {
+      currentChannel = channel;
+      channelNameEl.textContent = `# ${channel}`;
+      document.querySelectorAll('.channel').forEach(el => {
+        el.classList.toggle('active', el.dataset.channel === channel);
+      });
+
+      if (!history[channel]) {
+        history[channel] = [];
+      }
+      renderMessages();
+
+      if (connected) {
+        send({ type: 'join', username, channel });
+      }
+    }
+
+    function tryJoin() {
+      const name = (usernameInput.value || '').trim();
+      if (!name) {
+        alert('Please enter a username');
+        return;
+      }
+      username = name;
+      loginScreen.classList.add('hidden');
+      connect();
+      messageInput.focus();
+    }
+
+    channels.addEventListener('click', (event) => {
+      const target = event.target.closest('.channel');
+      if (!target) return;
+      switchChannel(target.dataset.channel);
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (!text || !connected) return;
+      send({ type: 'message', channel: currentChannel, author: username, text });
+      messageInput.value = '';
+      if (!history[currentChannel]) history[currentChannel] = [];
+      history[currentChannel].push({ author: username, text });
+      renderMessages();
+    });
+
+    messageInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+
+    joinBtn.addEventListener('click', tryJoin);
+    usernameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') tryJoin();
+    });
+    passwordInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') tryJoin();
+    });
+
+    renderMessages();
+  </script>
+</body>
+</html>
