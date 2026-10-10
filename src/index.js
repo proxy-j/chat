@@ -5,9 +5,12 @@
  *   OWNER_PASSWORD, ADMIN_PASSWORD, VIP_PASSWORD
  * A role is granted when the password typed into the login form matches one of them.
  * If a secret is not set, that role simply cannot be obtained.
+ *
+ * Custom rooms: any channel named "room:<code>" is a private room. Only sockets that
+ * have sent `joinRoom` for that code can read it, post in it, or receive its events.
  */
 
-const CHANNELS = ['general', 'gaming', 'memes'];
+const CHANNELS = ['general', 'gaming', 'memes', 'proxy'];
 const VOICE_CHANNELS = ['general', 'chill', 'gaming'];
 const COLORS = ['default', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'];
 const EFFECTS = new Set([
@@ -20,6 +23,10 @@ const MAX_DM_HISTORY = 200;
 const MAX_TEXT = 2000;
 const MAX_IMAGE_CHARS = 120000; // keeps every stored message under the 128 KiB value limit
 const MAX_FRAME_CHARS = 300000;
+
+const ROOM_RE = /^room:[a-z0-9-]{3,20}$/;
+const MAX_ROOMS_PER_USER = 10;
+const MAX_ROOMS_TOTAL = 200;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMOJI_RE = /^\P{ASCII}{1,10}$/u;
@@ -53,6 +60,11 @@ function cleanReason(v) {
   return typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 200) : '';
 }
 
+// Room codes: lowercase letters, digits and dashes, 3-20 long (anything else is stripped).
+const normRoom = (v) => String(v ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
+const isRoomChannel = (c) => typeof c === 'string' && ROOM_RE.test(c);
+const validChannel = (c) => typeof c === 'string' && (CHANNELS.includes(c) || ROOM_RE.test(c));
+
 // Constant-time string comparison. An unset/empty secret never matches.
 function safeEqual(input, secret) {
   if (typeof input !== 'string' || typeof secret !== 'string' || !secret) return false;
@@ -75,7 +87,7 @@ export class ChatRoom {
     this.ctx = ctx;
     this.env = env;
 
-    this.channels = Object.fromEntries(CHANNELS.map((c) => [c, []]));
+    this.channels = Object.fromEntries(CHANNELS.map((c) => [c, []])); // also holds "room:<code>" lists
     this.privateChats = new Map();    // chatId -> message[]
     this.dmParticipants = new Map();  // chatId -> [{ uuid, username }, { uuid, username }]
     this.bannedUsers = new Set();     // lowercase usernames
@@ -108,7 +120,8 @@ export class ChatRoom {
 
     // list() returns keys in ascending order, and keys embed a zero-padded timestamp.
     for (const m of (await this.ctx.storage.list({ prefix: 'ch:' })).values()) {
-      if (this.channels[m.channel]) this.channels[m.channel].push(m);
+      const list = this.chanList(m.channel, true);
+      if (list) list.push(m);
     }
     for (const m of (await this.ctx.storage.list({ prefix: 'dm:' })).values()) {
       if (!this.privateChats.has(m.chatId)) this.privateChats.set(m.chatId, []);
@@ -130,6 +143,51 @@ export class ChatRoom {
   nextTimestamp() {
     this.lastTs = Math.max(Date.now(), this.lastTs + 1);
     return this.lastTs;
+  }
+
+  // ----- channel / room helpers -----
+
+  // Message list for a channel. Rooms are created on demand when `create` is true.
+  chanList(channel, create = false) {
+    if (!validChannel(channel)) return null;
+    if (!this.channels[channel] && create && isRoomChannel(channel)) this.channels[channel] = [];
+    return this.channels[channel] || null;
+  }
+
+  // Built-in channels are open to everyone; rooms only to sockets that joined them.
+  canAccessChannel(user, channel) {
+    if (CHANNELS.includes(channel)) return true;
+    return isRoomChannel(channel) && (user.rooms || []).includes(channel.slice(5));
+  }
+
+  roomUsers(code) {
+    return this.joinedSockets().filter(([, u]) => (u.rooms || []).includes(code)).map(([, u]) => u.username);
+  }
+
+  roomCount() {
+    return Object.keys(this.channels).filter((k) => k.startsWith('room:')).length;
+  }
+
+  // Drop rooms that are empty and have nobody in them (they hold no stored data).
+  pruneRooms() {
+    for (const [k, list] of Object.entries(this.channels)) {
+      if (k.startsWith('room:') && !list.length && !this.roomUsers(k.slice(5)).length) delete this.channels[k];
+    }
+  }
+
+  // Sends to everyone for built-in channels, or only to room members for rooms.
+  broadcastChannel(channel, data, exceptWs = null) {
+    if (!isRoomChannel(channel)) return this.broadcast(data, exceptWs);
+    const code = channel.slice(5);
+    const payload = JSON.stringify(data);
+    for (const [ws, u] of this.joinedSockets()) {
+      if (ws === exceptWs || !(u.rooms || []).includes(code)) continue;
+      try { ws.send(payload); } catch { /* ignore */ }
+    }
+  }
+
+  broadcastRoomUsers(code) {
+    this.broadcastChannel('room:' + code, { type: 'roomUsers', code, users: this.roomUsers(code) });
   }
 
   // ----- WebSocket entry points -----
@@ -178,6 +236,7 @@ export class ChatRoom {
         this.broadcast({ type: 'voiceUserLeft', username: user.username, channel: user.voice });
         this.broadcast({ type: 'voiceUsers', channel: user.voice, users: this.voiceUsers(user.voice) });
       }
+      for (const code of user.rooms || []) this.broadcastRoomUsers(code);
       this.broadcast({ type: 'userList', users: this.getUserList() });
     }
   }
@@ -277,11 +336,14 @@ export class ChatRoom {
       case 'privateMessage': return this.onPrivateMessage(ws, data, user);
       case 'privateChatRequest': return this.onPrivateChatRequest(ws, data, user);
       case 'privateChatResponse': return this.onPrivateChatResponse(ws, data, user);
-      case 'getHistory': return this.onGetHistory(ws, data);
+      case 'getHistory': return this.onGetHistory(ws, data, user);
       case 'getPrivateHistory': return this.onGetPrivateHistory(ws, data, user);
       case 'toggleReaction': return this.onToggleReaction(data, user);
       case 'typing': return this.onTyping(ws, data, user);
       case 'updateProfile': return this.onUpdateProfile(data, user);
+
+      case 'joinRoom': return this.onJoinRoom(ws, data, user);
+      case 'leaveRoom': return this.onLeaveRoom(ws, data, user);
 
       case 'joinVoice': return this.onJoinVoice(ws, data, user);
       case 'leaveVoice': return this.leaveVoice(ws, user);
@@ -296,7 +358,7 @@ export class ChatRoom {
       case 'adminUnban': return this.onAdminUnban(ws, data);
       case 'adminUnbanIP': return this.onAdminUnbanIP(ws, data);
       case 'adminWarning': return this.onAdminWarning(ws, data, user);
-      case 'adminDeleteMessage': return this.onAdminDeleteMessage(ws, data);
+      case 'adminDeleteMessage': return this.onAdminDeleteMessage(ws, data, user);
       case 'adminGetBanList': return this.onAdminGetBanList(ws);
       case 'adminBroadcast': return this.onAdminBroadcast(ws, data);
       case 'adminSlowMode': return this.onAdminSlowMode(ws, data);
@@ -342,11 +404,13 @@ export class ChatRoom {
 
     let finalName = name;
     let staleVoice = null;
+    let staleRooms = [];
     const clash = this.findUser(name);
     if (clash) {
       if (clash.user.uuid === uuid) {
         // Same person reconnecting before the old socket was noticed as dead: replace it.
         staleVoice = clash.user.voice;
+        staleRooms = clash.user.rooms || [];
         clash.ws.serializeAttachment({ ip: clash.user.ip });
         try { clash.ws.close(4000, 'Replaced by a new connection'); } catch { /* ignore */ }
       } else if (/^guest$/i.test(name)) {
@@ -359,7 +423,7 @@ export class ChatRoom {
     }
 
     ws.serializeAttachment({
-      ip, uuid, username: finalName, isOwner, isAdmin, isVIP, voice: null, pending: []
+      ip, uuid, username: finalName, isOwner, isAdmin, isVIP, voice: null, pending: [], rooms: []
     });
 
     send(ws, { type: 'joined', uuid, username: finalName, isOwner, isAdmin, isVIP });
@@ -372,6 +436,7 @@ export class ChatRoom {
       this.broadcast({ type: 'voiceUserLeft', username: finalName, channel: staleVoice });
       this.broadcast({ type: 'voiceUsers', channel: staleVoice, users: this.voiceUsers(staleVoice) });
     }
+    for (const code of staleRooms) this.broadcastRoomUsers(code);
   }
 
   dmListFor(uuid) {
@@ -382,6 +447,51 @@ export class ChatRoom {
       if (other) chats.push({ chatId, with: other.username });
     }
     return chats;
+  }
+
+  // ----- custom rooms -----
+
+  onJoinRoom(ws, data, user) {
+    const code = normRoom(data.code);
+    if (code.length < 3) {
+      send(ws, { type: 'error', message: 'Room codes need 3-20 letters, numbers or dashes' });
+      return;
+    }
+    const restore = !!data.restore;
+    const rooms = user.rooms || [];
+    if (rooms.includes(code)) {
+      send(ws, { type: 'roomJoined', code, restore });
+      send(ws, { type: 'roomUsers', code, users: this.roomUsers(code) });
+      return;
+    }
+    if (rooms.length >= MAX_ROOMS_PER_USER) {
+      send(ws, { type: 'error', message: `You can be in at most ${MAX_ROOMS_PER_USER} rooms` });
+      return;
+    }
+
+    const channel = 'room:' + code;
+    if (!this.channels[channel]) {
+      if (this.roomCount() >= MAX_ROOMS_TOTAL) this.pruneRooms();
+      if (this.roomCount() >= MAX_ROOMS_TOTAL) {
+        send(ws, { type: 'error', message: 'Too many rooms right now, try again later' });
+        return;
+      }
+      this.channels[channel] = [];
+    }
+
+    user.rooms = [...rooms, code];
+    ws.serializeAttachment(user);
+    send(ws, { type: 'roomJoined', code, restore });
+    this.broadcastRoomUsers(code);
+  }
+
+  onLeaveRoom(ws, data, user) {
+    const code = normRoom(data.code);
+    if (!(user.rooms || []).includes(code)) return;
+    user.rooms = user.rooms.filter((r) => r !== code);
+    ws.serializeAttachment(user);
+    send(ws, { type: 'roomLeft', code });
+    this.broadcastRoomUsers(code);
   }
 
   // ----- messages -----
@@ -427,7 +537,7 @@ export class ChatRoom {
   }
 
   onMessage(ws, data, user) {
-    if (!CHANNELS.includes(data.channel)) return;
+    if (!validChannel(data.channel) || !this.canAccessChannel(user, data.channel)) return;
     const content = this.readContent(ws, data);
     if (!content) return;
     if (!this.checkMuted(ws, user)) return;
@@ -445,14 +555,15 @@ export class ChatRoom {
     const message = this.buildMessage(user, data, content.text, content.imageUrl);
     message.channel = data.channel;
 
-    const list = this.channels[data.channel];
+    const list = this.chanList(data.channel, true);
+    if (!list) return;
     list.push(message);
     bg(this.ctx.storage.put(chKey(message), message));
     while (list.length > MAX_CHANNEL_HISTORY) {
       bg(this.ctx.storage.delete(chKey(list.shift())));
     }
 
-    this.broadcast({ type: 'message', message });
+    this.broadcastChannel(data.channel, { type: 'message', message });
   }
 
   onPrivateMessage(ws, data, user) {
@@ -476,9 +587,9 @@ export class ChatRoom {
     this.sendToUuids(uuids, { type: 'privateMessage', message });
   }
 
-  onGetHistory(ws, data) {
-    if (!CHANNELS.includes(data.channel)) return;
-    send(ws, { type: 'history', channel: data.channel, messages: this.channels[data.channel] });
+  onGetHistory(ws, data, user) {
+    if (!validChannel(data.channel) || !this.canAccessChannel(user, data.channel)) return;
+    send(ws, { type: 'history', channel: data.channel, messages: this.chanList(data.channel) || [] });
   }
 
   onGetPrivateHistory(ws, data, user) {
@@ -490,14 +601,14 @@ export class ChatRoom {
     if (typeof data.emoji !== 'string' || !EMOJI_RE.test(data.emoji)) return;
 
     let message;
-    let recipients = null; // null = everyone
+    let recipients = null; // null = everyone who can see the channel
     if (data.isPrivate) {
       if (!this.isParticipant(data.chatId, user.uuid)) return;
       message = (this.privateChats.get(data.chatId) || []).find((m) => m.id === data.messageId);
       recipients = this.dmParticipants.get(data.chatId).map((p) => p.uuid);
     } else {
-      if (!CHANNELS.includes(data.channel)) return;
-      message = this.channels[data.channel].find((m) => m.id === data.messageId);
+      if (!validChannel(data.channel) || !this.canAccessChannel(user, data.channel)) return;
+      message = (this.chanList(data.channel) || []).find((m) => m.id === data.messageId);
     }
     if (!message) return;
 
@@ -519,7 +630,7 @@ export class ChatRoom {
       chatId: message.chatId
     };
     if (recipients) this.sendToUuids(recipients, update);
-    else this.broadcast(update);
+    else this.broadcastChannel(message.channel, update);
   }
 
   onTyping(ws, data, user) {
@@ -528,8 +639,8 @@ export class ChatRoom {
       if (!this.isParticipant(data.chatId, user.uuid)) return;
       const others = this.dmParticipants.get(data.chatId).map((p) => p.uuid).filter((u) => u !== user.uuid);
       this.sendToUuids(others, { type: 'typing', username: user.username, isTyping, isPrivate: true, chatId: data.chatId });
-    } else if (CHANNELS.includes(data.channel)) {
-      this.broadcast({ type: 'typing', username: user.username, isTyping, isPrivate: false, channel: data.channel }, ws);
+    } else if (validChannel(data.channel) && this.canAccessChannel(user, data.channel)) {
+      this.broadcastChannel(data.channel, { type: 'typing', username: user.username, isTyping, isPrivate: false, channel: data.channel }, ws);
     }
   }
 
@@ -718,14 +829,15 @@ export class ChatRoom {
     this.ok(ws, `Warned ${t.user.username} (warning #${count})`);
   }
 
-  onAdminDeleteMessage(ws, data) {
-    if (!CHANNELS.includes(data.channel)) return;
-    const list = this.channels[data.channel];
+  onAdminDeleteMessage(ws, data, user) {
+    if (!validChannel(data.channel) || !this.canAccessChannel(user, data.channel)) return;
+    const list = this.chanList(data.channel);
+    if (!list) return;
     const i = list.findIndex((m) => m.id === data.messageId);
     if (i === -1) return;
     const [removed] = list.splice(i, 1);
     bg(this.ctx.storage.delete(chKey(removed)));
-    this.broadcast({ type: 'messageDeleted', messageId: removed.id, channel: data.channel });
+    this.broadcastChannel(data.channel, { type: 'messageDeleted', messageId: removed.id, channel: data.channel });
     this.ok(ws, 'Message deleted');
   }
 
