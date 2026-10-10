@@ -35,6 +35,7 @@ body.light-theme .ap-user-name{color:#2e3338}
 body.light-theme .notif{background:#fff;border-color:#e3e5e8}
 body.light-theme .notif-title{color:#060607}
 body.light-theme .notif-body{color:#2e3338}
+body.light-theme .room-input{background:#ebedef;color:#2e3338}
 .container{display:flex;height:100vh;overflow:hidden}
 .sidebar{width:240px;flex-shrink:0;background:#2f3136;display:flex;flex-direction:column}
 .sidebar.right{order:3;border-left:1px solid #202225;position:relative;transition:margin-right .3s}
@@ -49,15 +50,28 @@ body.light-theme .notif-body{color:#2e3338}
 .channel:hover{background:#3a3c42;color:#dcddde}
 .channel.active{background:#404249;color:#fff}
 .channel.has-unread{font-weight:600}
-.channel-name{display:flex;align-items:center}
+.channel-name{display:flex;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .channel-name::before{content:'#';margin-right:6px;font-weight:600;color:#72767d}
 .channel.private .channel-name::before{content:'@';color:#5865f2}
+.channel.room .channel-name::before{content:'🔑';font-size:11px;font-weight:400}
+.room-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .unread-badge{background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;display:none}
 .channel.has-unread .unread-badge{display:block}
 .dm-badge{position:absolute;right:28px;top:50%;transform:translateY(-50%);background:#ed4245;color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center;display:block}
 .close-dm{opacity:0;background:none;border:none;color:#96989d;cursor:pointer;font-size:16px;transition:opacity .2s}
 .channel:hover .close-dm{opacity:1}
 .close-dm:hover{color:#ed4245}
+.room-form{display:flex;gap:4px;padding:0 4px;margin:6px 0}
+.room-input{flex:1;min-width:0;padding:7px 8px;border-radius:4px;border:none;background:#202225;color:#dcddde;font-size:12px}
+.room-input:focus{outline:none;box-shadow:0 0 0 2px #5865f2}
+.room-input::placeholder{color:#72767d}
+.room-btn{border:none;border-radius:4px;background:#5865f2;color:#fff;font-size:12px;font-weight:600;padding:0 10px;cursor:pointer;transition:background .2s;white-space:nowrap}
+.room-btn:hover{background:#4752c4}
+.room-btn.alt{background:#4f545c}
+.room-btn.alt:hover{background:#5d6269}
+.header-actions{display:flex;align-items:center;gap:10px}
+.header-actions .room-btn{padding:6px 10px}
+.room-count{font-size:12px;color:#96989d}
 .voice-section{margin-top:16px;padding-top:16px;border-top:1px solid #202225}
 .voice-channel{padding:8px 12px;margin:2px 0;border-radius:4px;color:#96989d;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:14px;transition:all .15s}
 .voice-channel:hover{background:#3a3c42;color:#dcddde}
@@ -76,7 +90,7 @@ body.light-theme .notif-body{color:#2e3338}
 .voice-participant{padding:4px 8px;font-size:12px;color:#dcddde;display:flex;align-items:center;gap:6px}
 .voice-participant::before{content:'👤';font-size:10px}
 .voice-participant.speaking::before{content:'🎤';animation:pulse 1s infinite}
-.voice-icon{width:16px;height:16px;margin-right:6px;fill:currentColor;flex-shrink:0}
+.voice-icon{width:18px;height:18px;margin-right:6px;fill:currentColor;flex-shrink:0;display:block}
 .users-section{flex:1;overflow-y:auto;padding:8px}
 .users-section-header{padding:8px 12px;color:#96989d;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .online-count{color:#3ba55d;font-size:11px}
@@ -112,7 +126,7 @@ body.light-theme .user-display-name{color:#060607}
 .conn-status.online{background:#3ba55d}
 .settings-btn{background:none;border:none;color:#96989d;cursor:pointer;font-size:20px;padding:4px;border-radius:4px;transition:all .2s;display:flex;align-items:center;justify-content:center}
 .settings-btn:hover{background:#3a3c42;color:#fff}
-#settingsPanel{position:fixed;bottom:60px;left:8px;width:400px;max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#settingsPanel{position:fixed;bottom:60px;left:8px;width:400px;max-width:calc(100vw - 16px);max-height:500px;background:#2f3136;border:1px solid #202225;border-radius:8px;display:none;flex-direction:column;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 #settingsPanel.show{display:flex}
 .settings-header{padding:12px 16px;border-bottom:1px solid #202225;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .settings-title{color:#fff;font-weight:600;font-size:14px}
@@ -122,7 +136,7 @@ body.light-theme .user-display-name{color:#060607}
 .settings-section{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #202225}
 .settings-section:last-child{border-bottom:none}
 .settings-section-title{color:#fff;font-size:13px;font-weight:600;margin-bottom:12px;text-transform:uppercase}
-.settings-option{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.settings-option{display:flex;justify-content:space-between;align-items:center;padding:8px 0;gap:12px}
 .settings-option-label{color:#dcddde;font-size:13px}
 .settings-option-desc{color:#96989d;font-size:11px;margin-top:2px}
 .settings-toggle{width:40px;height:20px;background:#72767d;border-radius:10px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
@@ -147,6 +161,7 @@ body.light-theme .user-display-name{color:#060607}
 .current-channel{font-weight:600;font-size:16px}
 .current-channel::before{content:'#';margin-right:4px;color:#72767d}
 .current-channel.private::before{content:'@';color:#5865f2}
+.current-channel.room::before{content:'🔑';font-size:13px;margin-right:6px}
 .messages{flex:1;overflow-y:auto;padding:16px}
 .message{display:flex;padding:4px 0;margin-bottom:8px;position:relative;transition:background .15s}
 .message:hover{background:rgba(0,0,0,.1);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;border-radius:4px}
@@ -229,7 +244,7 @@ body.light-theme .user-display-name{color:#060607}
 #loginOverlay{position:fixed;inset:0;z-index:2000;background:linear-gradient(135deg,#1a1c20 0%,#2f3136 50%,#1a1c20 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
 .login-title{font-family:'Great Vibes',cursive;font-size:72px;color:#fff;margin-bottom:30px;text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3);animation:glow 2s ease-in-out infinite}
 @keyframes glow{0%,100%{text-shadow:0 0 20px rgba(88,101,242,.5),0 0 40px rgba(88,101,242,.3)}50%{text-shadow:0 0 30px rgba(88,101,242,.7),0 0 60px rgba(88,101,242,.5)}}
-#loginCard{width:320px;background:#2f3136;border:1px solid #202225;border-radius:8px;padding:24px;color:#fff;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#loginCard{width:320px;max-width:calc(100vw - 32px);background:#2f3136;border:1px solid #202225;border-radius:8px;padding:24px;color:#fff;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 #loginCard h2{margin-bottom:16px;font-size:20px}
 #usernameInput,#pwdInput{width:100%;padding:12px;border-radius:6px;border:none;background:#40444b;color:#fff;font-size:14px;transition:box-shadow .2s;margin-bottom:12px}
 #usernameInput:focus,#pwdInput:focus{outline:none;box-shadow:0 0 0 2px #5865f2}
@@ -242,12 +257,18 @@ body.light-theme .user-display-name{color:#060607}
 .empty{text-align:center;color:#72767d;padding:12px;font-size:12px}
 .modal-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
 .modal-overlay.show{display:flex}
+#rulesModal{z-index:2100}
 .modal{width:520px;max-width:92vw;max-height:80vh;background:#2f3136;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.5)}
 .modal-header{padding:16px;background:#5865f2;color:#fff;display:flex;justify-content:space-between;align-items:center}
 .modal-title{font-size:18px;font-weight:700}
 .modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
 .modal-close:hover{background:rgba(255,255,255,.3)}
 .modal-body{padding:16px;overflow-y:auto;flex:1}
+.rules-intro{color:#96989d;font-size:13px;margin-bottom:12px}
+.rule{background:#40444b;border-left:3px solid #5865f2;padding:10px 12px;border-radius:6px;margin-bottom:8px;color:#dcddde;font-size:13px;line-height:1.4}
+.rule b{color:#fff}
+.rules-actions{display:flex;gap:8px;margin-top:12px}
+.rules-actions .btn{margin-top:0}
 .section{margin-bottom:16px}
 .section-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px}
 .help-command{background:#40444b;padding:10px;border-radius:6px;margin-bottom:8px;border-left:3px solid #5865f2}
@@ -316,15 +337,42 @@ body.light-theme .user-display-name{color:#060607}
 </style>
 </head>
 <body>
+<!-- shared icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<defs>
+<symbol id="icon-speaker" viewBox="0 0 24 24">
+<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+</symbol>
+</defs>
+</svg>
+
 <div id="loginOverlay">
 <div class="login-title">The Chet</div>
 <div id="loginCard">
 <h2>Welcome to The Chet</h2>
 <input type="text" id="usernameInput" placeholder="Username" maxlength="30" autocomplete="username">
-<input type="password" id="pwdInput" placeholder="Password (optional)" autocomplete="current-password">
+<div id="adminField" style="display:none">
+<input type="password" id="pwdInput" placeholder="Admin / VIP password" autocomplete="current-password">
+</div>
 <button id="loginBtn">Join</button>
-<div class="guest-login" id="guestLogin">or continue as Guest</div>
+<div class="guest-login" id="adminToggle">Admin login</div>
 <div id="loginError"></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="rulesModal">
+<div class="modal">
+<div class="modal-header">
+<div class="modal-title">📜 Server Rules</div>
+</div>
+<div class="modal-body">
+<div class="rules-intro">Please read and agree to the rules before joining.</div>
+<div id="rulesList"></div>
+<div class="rules-actions">
+<button class="btn btn-danger" id="declineRules">Cancel</button>
+<button class="btn btn-success" id="acceptRules">I Agree &amp; Join</button>
+</div>
+</div>
 </div>
 </div>
 
@@ -353,6 +401,13 @@ body.light-theme .user-display-name{color:#060607}
 <div class="settings-content">
 <div class="settings-section">
 <div class="settings-section-title">Notifications</div>
+<div class="settings-option">
+<div>
+<div class="settings-option-label">Browser Notifications</div>
+<div class="settings-option-desc" id="notifPermStatus"></div>
+</div>
+<button class="notif-btn notif-accept" id="enableBrowserNotif" style="flex:none;padding:6px 12px">Enable</button>
+</div>
 <div class="settings-option">
 <div>
 <div class="settings-option-label">Off</div>
@@ -527,6 +582,7 @@ body.light-theme .user-display-name{color:#060607}
 <option value="general">general</option>
 <option value="gaming">gaming</option>
 <option value="memes">memes</option>
+<option value="proxy">proxy</option>
 </select>
 </div>
 <button class="btn btn-danger" id="clearChatBtn">🗑️ Clear Channel</button>
@@ -558,6 +614,19 @@ body.light-theme .user-display-name{color:#060607}
 <span class="channel-name">memes</span>
 <span class="unread-badge">0</span>
 </div>
+<div class="channel" data-channel="proxy">
+<span class="channel-name">proxy</span>
+<span class="unread-badge">0</span>
+</div>
+</div>
+<div class="channel-section">
+<div class="section-header">Custom Rooms</div>
+<div class="room-form">
+<input type="text" class="room-input" id="roomCodeInput" placeholder="Enter room code" maxlength="20" autocomplete="off" spellcheck="false">
+<button class="room-btn" id="joinRoomBtn">Join</button>
+<button class="room-btn alt" id="newRoomBtn" title="Make a random room code">New</button>
+</div>
+<div id="roomList"></div>
 </div>
 <div class="channel-section">
 <div class="section-header">Direct Messages</div>
@@ -567,7 +636,7 @@ body.light-theme .user-display-name{color:#060607}
 <div class="section-header">Voice Channels</div>
 <div class="voice-channel" data-voice="general">
 <span class="voice-channel-name">
-<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:currentColor;stroke-width:5;stroke-linejoin:round;fill:none"></path></svg>
+<svg class="voice-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg>
 general
 </span>
 <span class="voice-status" id="voiceStatusGeneral">0 users</span>
@@ -580,7 +649,7 @@ general
 
 <div class="voice-channel" data-voice="chill">
 <span class="voice-channel-name">
-<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:currentColor;stroke-width:5;stroke-linejoin:round;fill:none"></path></svg>
+<svg class="voice-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg>
 chill
 </span>
 <span class="voice-status" id="voiceStatusChill">0 users</span>
@@ -593,7 +662,7 @@ chill
 
 <div class="voice-channel" data-voice="gaming">
 <span class="voice-channel-name">
-<svg class="voice-icon" viewBox="0 0 75 75" xmlns="http://www.w3.org/2000/svg"><path d="M39.389,13.769 L22.235,28.606 L6,28.606 L6,47.699 L21.989,47.699 L39.389,62.75 L39.389,13.769z" style="stroke:currentColor;stroke-width:5;stroke-linejoin:round;fill:none"></path></svg>
+<svg class="voice-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg>
 gaming
 </span>
 <span class="voice-status" id="voiceStatusGaming">0 users</span>
@@ -622,6 +691,10 @@ gaming
 <div class="main-content">
 <div class="chat-header">
 <div class="current-channel" id="curChan">general</div>
+<div class="header-actions" id="roomTools" style="display:none">
+<span class="room-count" id="roomCount"></span>
+<button class="room-btn" id="copyInvite">Copy invite link</button>
+</div>
 </div>
 <div class="messages" id="msgArea"></div>
 <div class="input-area">
@@ -674,6 +747,17 @@ const WS_FALLBACK = 'wss://chet.jplevandoski.workers.dev/ws'; // used only if th
 const MAX_IMAGE_CHARS = 115000;                               // must stay below the server's limit (120000)
 const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+// Edit these to change the rules shown when someone clicks Join.
+const RULES = [
+  ['Be respectful', 'Treat everyone kindly. No harassment, bullying or personal attacks.'],
+  ['No hate speech', 'Slurs and discrimination of any kind are not allowed.'],
+  ['No spam or flooding', "Don't repeat messages, flood the chat, or spam images."],
+  ['Keep it clean', 'No NSFW, graphic, or illegal content.'],
+  ['No impersonation', "Don't pretend to be staff or another member."],
+  ['Respect staff', 'Follow instructions from admins and moderators.'],
+  ['Protect privacy', "Don't share other people's personal information. Room codes are for friends you trust."]
+];
+
 const $ = id => document.getElementById(id);
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -702,12 +786,18 @@ let isAdmin = false, isVIP = false, isOwner = false;
 let curChan = 'general', chatType = 'channel', curDM = null, replyTo = null;
 const messages = {}, dmMessages = {}, dmPartners = {}, unreadChannels = {}, unreadDMs = {};
 let users = [];
-let hasUnread = false, isTabVisible = !document.hidden, selectedBanType = 'ip', selectedImage = null, notifPermission = false;
+let hasUnread = false, selectedBanType = 'ip', selectedImage = null, swReg = null;
 let currentVoiceChannel = null, localStream = null, isMuted = false, voiceBusy = false;
 const peers = {}, voiceChannelData = {};
 const userSettings = { profileColor: 'default', profanityFilter: false, messageGrouping: false, lightTheme: false, notifications: 'all' };
 
+// custom rooms
+const roomUsersMap = {};
+let savedRooms = [];
+let pendingInviteRoom = null;
+
 const isStaff = () => isAdmin || isOwner;
+const isActive = () => !document.hidden && document.hasFocus();
 
 /* ---------- settings ---------- */
 function loadSettings() {
@@ -726,6 +816,25 @@ function applySettings() {
   $('myAvatar').className = 'user-avatar' + (userSettings.profileColor !== 'default' ? ' color-' + userSettings.profileColor : '');
 }
 
+/* ---------- custom rooms (helpers) ---------- */
+const ROOM_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+const normRoom = v => String(v || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
+const isRoom = ch => typeof ch === 'string' && ch.startsWith('room:');
+const roomChan = code => 'room:' + code;
+const chanLabel = ch => isRoom(ch) ? '🔑 ' + ch.slice(5) : '#' + ch;
+function randomRoomCode() {
+  const a = new Uint32Array(6);
+  crypto.getRandomValues(a);
+  return [...a].map(n => ROOM_ALPHABET[n % ROOM_ALPHABET.length]).join('');
+}
+function loadRooms() {
+  try {
+    const arr = JSON.parse(store.get('chetRooms') || '[]');
+    savedRooms = Array.isArray(arr) ? arr.map(normRoom).filter(c => c.length >= 3).slice(0, 10) : [];
+  } catch { savedRooms = []; }
+}
+function saveRooms() { store.set('chetRooms', JSON.stringify(savedRooms)); }
+
 /* ---------- profanity filter (applied when displaying, whole words only) ---------- */
 const BAD_WORDS = ['fuck','shit','damn','ass','bitch','bastard','nigga','nigger','faggot','fuk'];
 const LEET = { a: '[a@4]', e: '[e3]', i: '[i1!]', o: '[o0]', s: '[s$5]', l: '[l1]', t: '[t7]' };
@@ -736,28 +845,59 @@ function filterProfanity(text) {
   return userSettings.profanityFilter ? text.replace(PROFANITY_RE, m => '*'.repeat(m.length)) : text;
 }
 
-/* ---------- notifications / favicon ---------- */
-document.addEventListener('visibilitychange', () => {
-  isTabVisible = !document.hidden;
-  if (isTabVisible) clearFaviconNotif();
-});
+/* ---------- browser notifications ---------- */
+const notifSupported = () => 'Notification' in window;
 
-async function requestNotifPerm() {
-  try {
-    if ('Notification' in window) {
-      if (Notification.permission === 'default') notifPermission = (await Notification.requestPermission()) === 'granted';
-      else notifPermission = Notification.permission === 'granted';
-    }
-  } catch { /* unsupported */ }
+function updateNotifStatus() {
+  const status = $('notifPermStatus'), btn = $('enableBrowserNotif');
+  if (!notifSupported()) { status.textContent = 'Not supported in this browser'; btn.style.display = 'none'; return; }
+  if (!window.isSecureContext) { status.textContent = 'Needs an https page'; btn.style.display = 'none'; return; }
+  const p = Notification.permission;
+  if (p === 'granted') {
+    status.textContent = 'On: alerts appear when this tab is in the background';
+    btn.textContent = 'Send test'; btn.style.display = '';
+  } else if (p === 'denied') {
+    status.textContent = "Blocked: allow notifications for this site in your browser's site settings";
+    btn.style.display = 'none';
+  } else {
+    status.textContent = 'Not enabled yet';
+    btn.textContent = 'Enable'; btn.style.display = '';
+  }
 }
 
-function showBrowserNotif(title, body) {
-  if (!notifPermission || isTabVisible || userSettings.notifications === 'off') return;
+// Must be called from a click/keypress or the browser will ignore the request.
+async function requestNotifPerm() {
   try {
-    const n = new Notification(title, { body, tag: 'chat-' + Date.now() });
+    if (notifSupported() && window.isSecureContext && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  } catch { /* unsupported */ }
+  updateNotifStatus();
+}
+
+async function showBrowserNotif(title, body, force) {
+  if (!notifSupported() || Notification.permission !== 'granted') return;
+  if (!force && (userSettings.notifications === 'off' || isActive())) return;
+  const opts = { body, tag: 'chet-' + Date.now() };
+  // Prefer the service worker: it's the only route that works on Android Chrome.
+  try {
+    const reg = swReg || (navigator.serviceWorker && await navigator.serviceWorker.getRegistration());
+    if (reg && reg.showNotification) { await reg.showNotification(title, opts); return; }
+  } catch { /* fall back to the plain API */ }
+  try {
+    const n = new Notification(title, opts);
     n.onclick = () => { window.focus(); n.close(); };
   } catch (e) { console.error('Notification error:', e); }
 }
+
+function registerWorker() {
+  if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+  navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(e => console.warn('Service worker not registered:', e));
+}
+
+/* ---------- in-page notifications / favicon ---------- */
+document.addEventListener('visibilitychange', () => { if (isActive()) clearFaviconNotif(); });
+window.addEventListener('focus', clearFaviconNotif);
 
 const HELP_COMMANDS = [{ name: '/help', desc: 'Show this help menu' }];
 const FAVICON_BASE = "<text y='0.9em' font-size='90'>💀</text>";
@@ -765,7 +905,7 @@ function updateFavicon(on) {
   const badge = on ? "<circle cx='85' cy='15' r='15' fill='%23ed4245'/><text x='85' y='22' text-anchor='middle' font-size='18' fill='white'>!</text>" : '';
   $('favicon').href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" + FAVICON_BASE + badge + '</svg>';
 }
-function showFaviconNotif() { if (!isTabVisible) { hasUnread = true; updateFavicon(true); $('notifDot').classList.add('show'); } }
+function showFaviconNotif() { if (!isActive()) { hasUnread = true; updateFavicon(true); $('notifDot').classList.add('show'); } }
 function clearFaviconNotif() { hasUnread = false; updateFavicon(false); $('notifDot').classList.remove('show'); }
 
 // In-page toast. `actions` = [{label, cls, onClick}] makes it a prompt that stays until answered.
@@ -870,11 +1010,25 @@ function connect() {
   };
 }
 
+/* ---------- login flow: Join -> rules popup -> connect ---------- */
+const adminFieldShown = () => $('adminField').style.display !== 'none';
+function showAdminField(show) {
+  $('adminField').style.display = show ? 'block' : 'none';
+  $('adminToggle').textContent = show ? 'Cancel admin login' : 'Admin login';
+  if (show) $('pwdInput').focus(); else $('pwdInput').value = '';
+}
+
 function login() {
-  const name = $('usernameInput').value.trim();
-  if (!name) { $('loginError').textContent = 'Choose a username'; return; }
-  username = name;
-  loginPassword = $('pwdInput').value;
+  $('loginError').textContent = '';
+  $('rulesModal').classList.add('show');
+}
+
+function cancelRules() { $('rulesModal').classList.remove('show'); }
+
+function acceptRules() {
+  $('rulesModal').classList.remove('show');
+  username = $('usernameInput').value.trim() || 'Guest';
+  loginPassword = adminFieldShown() ? $('pwdInput').value : '';
   noReconnect = false;
   $('loginError').textContent = 'Connecting...';
   setLoginBusy(true);
@@ -888,6 +1042,7 @@ function failLogin(message) {
   setLoginBusy(false);
   $('loginOverlay').style.display = 'flex';
   $('loginError').textContent = message;
+  if (loginPassword) showAdminField(true);
 }
 
 /* ---------- message handling ---------- */
@@ -914,14 +1069,25 @@ function handle(d) {
       applySettings();
 
       send({ type: 'updateProfile', profileColor: userSettings.profileColor });
+      // Rooms are per-connection on the server, so join them again (without switching to them).
+      for (const code of savedRooms) send({ type: 'joinRoom', code, restore: true });
       // Drop cached history (we may have missed messages) and refetch what's on screen.
       for (const k of Object.keys(messages)) delete messages[k];
       for (const k of Object.keys(dmMessages)) delete dmMessages[k];
       if (chatType === 'dm' && curDM) send({ type: 'getPrivateHistory', chatId: curDM });
       else send({ type: 'getHistory', channel: curChan });
+      // Opened from an invite link.
+      if (pendingInviteRoom) { requestRoom(pendingInviteRoom, false); pendingInviteRoom = null; }
     },
     joinError: () => failLogin(d.message || 'Could not join'),
     dmList: () => d.chats.forEach(c => { dmPartners[c.chatId] = c.with; addDM(c.chatId, c.with); }),
+
+    roomJoined: () => {
+      if (!savedRooms.includes(d.code)) { savedRooms.push(d.code); saveRooms(); }
+      addRoomItem(d.code);
+      if (!d.restore) switchChan(roomChan(d.code));
+    },
+    roomUsers: () => { roomUsersMap[d.code] = d.users; updateRoomCount(); },
 
     message: () => {
       const m = d.message;
@@ -935,8 +1101,8 @@ function handle(d) {
       if (userSettings.notifications === 'all') {
         const preview = m.imageUrl && !m.text ? '[Image]' : filterProfanity(m.text).slice(0, 50);
         showFaviconNotif();
-        if (!viewing) notify('💬 New Message', `#${m.channel}: ${m.author}: ${preview}`);
-        showBrowserNotif(`New message in #${m.channel}`, `${m.author}: ${preview}`);
+        if (!viewing) notify('💬 New Message', `${chanLabel(m.channel)}: ${m.author}: ${preview}`);
+        showBrowserNotif(`New message in ${chanLabel(m.channel)}`, `${m.author}: ${preview}`);
       }
     },
     history: () => { messages[d.channel] = d.messages; if (chatType === 'channel' && d.channel === curChan) render(true); },
@@ -1050,7 +1216,7 @@ function lockInput(seconds) {
 
 /* ---------- unread badges ---------- */
 function updateUnreadBadge(channel) {
-  const item = document.querySelector(`.channel[data-channel="${channel}"]`);
+  const item = [...document.querySelectorAll('.channel[data-channel]')].find(e => e.dataset.channel === channel);
   if (!item) return;
   const count = unreadChannels[channel] || 0;
   item.querySelector('.unread-badge').textContent = count;
@@ -1156,7 +1322,7 @@ function reqDM(name) {
   if (send({ type: 'privateChatRequest', targetUsername: name })) notify('💬', `DM request sent to ${name}`);
 }
 
-/* ---------- DMs & channels ---------- */
+/* ---------- DMs, channels & rooms ---------- */
 function addDM(id, name) {
   if (dmItem(id)) return;
   const item = el('div', 'channel private');
@@ -1174,6 +1340,69 @@ function addDM(id, name) {
   $('dmList').appendChild(item);
 }
 
+function roomItem(code) {
+  return [...document.querySelectorAll('#roomList .channel')].find(e => e.dataset.channel === roomChan(code));
+}
+
+function addRoomItem(code) {
+  if (roomItem(code)) return;
+  const item = el('div', 'channel room');
+  item.dataset.channel = roomChan(code);
+  item.appendChild(el('span', 'channel-name', code));
+  const right = el('span', 'room-right');
+  right.appendChild(el('span', 'unread-badge', '0'));
+  const close = el('button', 'close-dm', '×');
+  close.title = 'Leave room';
+  close.onclick = e => { e.stopPropagation(); leaveRoom(code); };
+  right.appendChild(close);
+  item.appendChild(right);
+  item.onclick = () => switchChan(roomChan(code));
+  $('roomList').appendChild(item);
+  if (curChan === roomChan(code) && chatType === 'channel') item.classList.add('active');
+}
+
+function requestRoom(rawCode, restore) {
+  const code = normRoom(rawCode);
+  if (code.length < 3) { notify('❌', 'Room codes need 3-20 letters, numbers or dashes'); return; }
+  if (!connected) { notify('⚠️', 'Not connected yet'); return; }
+  send({ type: 'joinRoom', code, restore: !!restore });
+}
+
+function leaveRoom(code) {
+  send({ type: 'leaveRoom', code });
+  const item = roomItem(code);
+  if (item) item.remove();
+  savedRooms = savedRooms.filter(c => c !== code);
+  saveRooms();
+  delete messages[roomChan(code)];
+  delete roomUsersMap[code];
+  delete unreadChannels[roomChan(code)];
+  if (curChan === roomChan(code) && chatType === 'channel') switchChan('general');
+}
+
+function updateRoomCount() {
+  if (!(chatType === 'channel' && isRoom(curChan))) return;
+  const list = roomUsersMap[curChan.slice(5)] || [];
+  $('roomCount').textContent = `${list.length} here`;
+  $('roomCount').title = list.join(', ');
+}
+
+function inviteLink(code) {
+  return location.href.split(/[?#]/)[0] + '?room=' + encodeURIComponent(code);
+}
+
+async function copyInvite() {
+  if (!isRoom(curChan)) return;
+  const code = curChan.slice(5);
+  const link = inviteLink(code);
+  try {
+    await navigator.clipboard.writeText(link);
+    notify('🔗', 'Invite link copied. Friends can also type the code: ' + code);
+  } catch {
+    window.prompt('Copy this invite link:', link);
+  }
+}
+
 function resetComposerState() {
   sendTyping(false);
   $('typingInd').textContent = '';
@@ -1185,19 +1414,25 @@ function resetComposerState() {
 function switchChan(ch) {
   resetComposerState();
   chatType = 'channel'; curDM = null; curChan = ch;
-  $('curChan').textContent = ch; $('curChan').classList.remove('private');
-  $('msgInput').placeholder = `Message #${ch} (try /help)`;
+  const room = isRoom(ch);
+  $('curChan').textContent = room ? ch.slice(5) : ch;
+  $('curChan').classList.remove('private');
+  $('curChan').classList.toggle('room', room);
+  $('roomTools').style.display = room ? 'flex' : 'none';
+  $('msgInput').placeholder = room ? `Message room ${ch.slice(5)}` : `Message #${ch} (try /help)`;
   document.querySelectorAll('.channel').forEach(c => c.classList.toggle('active', c.dataset.channel === ch));
   if (!messages[ch]) send({ type: 'getHistory', channel: ch }); else render(true);
   unreadChannels[ch] = 0;
   updateUnreadBadge(ch);
+  updateRoomCount();
   clearFaviconNotif();
 }
 
 function switchDM(id, name) {
   resetComposerState();
   chatType = 'dm'; curDM = id;
-  $('curChan').textContent = name; $('curChan').classList.add('private');
+  $('curChan').textContent = name; $('curChan').classList.add('private'); $('curChan').classList.remove('room');
+  $('roomTools').style.display = 'none';
   $('msgInput').placeholder = `Message @${name}`;
   document.querySelectorAll('.channel').forEach(c => c.classList.toggle('active', c.dataset.dm === id));
   if (!dmMessages[id]) send({ type: 'getPrivateHistory', chatId: id }); else render(true);
@@ -1488,8 +1723,21 @@ async function handleIceCandidate(d) {
 
 /* ---------- UI wiring ---------- */
 $('loginBtn').onclick = login;
-$('guestLogin').onclick = () => { $('usernameInput').value = 'Guest'; $('pwdInput').value = ''; login(); };
+$('adminToggle').onclick = () => showAdminField(!adminFieldShown());
 ['usernameInput', 'pwdInput'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
+
+// rules popup
+$('rulesList').replaceChildren(...RULES.map(([title, text], i) => {
+  const box = el('div', 'rule');
+  box.appendChild(el('b', null, `${i + 1}. ${title}`));
+  box.appendChild(document.createElement('br'));
+  box.appendChild(document.createTextNode(text));
+  return box;
+}));
+$('acceptRules').onclick = acceptRules;
+$('declineRules').onclick = cancelRules;
+$('rulesModal').addEventListener('click', e => { if (e.target === $('rulesModal')) cancelRules(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('rulesModal').classList.contains('show')) cancelRules(); });
 
 $('sendBtn').onclick = sendMessage;
 $('msgInput').addEventListener('keydown', e => {
@@ -1510,6 +1758,18 @@ document.querySelectorAll('.voice-channel').forEach(v => { v.onclick = () => joi
   $('muteVoice' + C).onclick = toggleMute;
   $('leaveVoice' + C).onclick = leaveVoice;
 });
+
+// custom rooms
+function joinRoomFromInput() {
+  const code = $('roomCodeInput').value;
+  if (!code.trim()) return;
+  requestRoom(code, false);
+  $('roomCodeInput').value = '';
+}
+$('joinRoomBtn').onclick = joinRoomFromInput;
+$('roomCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomFromInput(); });
+$('newRoomBtn').onclick = () => requestRoom(randomRoomCode(), false);
+$('copyInvite').onclick = copyInvite;
 
 $('imageBtn').onclick = () => $('imageInput').click();
 $('imageInput').addEventListener('change', async e => {
@@ -1541,7 +1801,7 @@ $('rightToggle').onclick = () => {
 };
 
 // settings panel
-$('settingsBtn').onclick = () => { $('adminPanel').classList.remove('show'); $('settingsPanel').classList.toggle('show'); };
+$('settingsBtn').onclick = () => { $('adminPanel').classList.remove('show'); updateNotifStatus(); $('settingsPanel').classList.toggle('show'); };
 $('closeSettings').onclick = () => $('settingsPanel').classList.remove('show');
 function changeSetting(fn) { fn(); saveSettings(); applySettings(); render(); }
 $('notifOffToggle').onclick = () => changeSetting(() => { userSettings.notifications = 'off'; });
@@ -1550,6 +1810,11 @@ $('notifAllToggle').onclick = () => changeSetting(() => { userSettings.notificat
 $('profanityToggle').onclick = () => changeSetting(() => { userSettings.profanityFilter = !userSettings.profanityFilter; });
 $('groupingToggle').onclick = () => changeSetting(() => { userSettings.messageGrouping = !userSettings.messageGrouping; });
 $('themeToggle').onclick = () => changeSetting(() => { userSettings.lightTheme = !userSettings.lightTheme; });
+$('enableBrowserNotif').onclick = async () => {
+  if (Notification.permission === 'default') await requestNotifPerm();
+  updateNotifStatus();
+  if (Notification.permission === 'granted') showBrowserNotif('The Chet', 'Notifications are working 🎉', true);
+};
 document.querySelectorAll('.color-option').forEach(o => {
   o.onclick = () => {
     changeSetting(() => { userSettings.profileColor = o.dataset.color; });
@@ -1622,11 +1887,20 @@ $('clearChatBtn').onclick = () => {
 /* ---------- startup ---------- */
 window.addEventListener('load', () => {
   loadSettings();
+  loadRooms();
   applySettings();
   updateAllVoiceUI();
+  updateNotifStatus();
+  registerWorker();
+  savedRooms.forEach(addRoomItem);
+
   const saved = store.get('username');
   if (saved) $('usernameInput').value = saved;
-  if (new URLSearchParams(location.search).get('guest') === 'true') {
+
+  const params = new URLSearchParams(location.search);
+  const invite = normRoom(params.get('room'));
+  if (invite.length >= 3) pendingInviteRoom = invite;
+  if (params.get('guest') === 'true') {
     $('usernameInput').value = 'Guest';
     login();
   }
